@@ -165,31 +165,21 @@ export default function ProductPage() {
     return <div className="max-w-7xl mx-auto px-4 py-32 text-center text-gray-500">Produit introuvable.</div>;
   }
 
-  let productStock = { 
+  let productStock: Record<string, any> = { 
     XS: 0, S: 0, M: 0, L: 0, XXL: 0, 
     '34': 0, '36': 0, '38': 0, '40': 0, '42': 0, '44': 0, '46': 0, '48': 0 
   };
   if (product.stock) {
     if (typeof product.stock === 'object') {
-      productStock = product.stock;
+      productStock = { ...productStock, ...product.stock };
     } else if (typeof product.stock === 'string') {
       try {
-        productStock = JSON.parse(product.stock);
+        productStock = { ...productStock, ...JSON.parse(product.stock) };
       } catch (e) {
         // Garde le défaut
       }
     }
   }
-
-  const sizeOrder = ['XS', 'S', 'M', 'L', 'XXL', '34', '36', '38', '40', '42', '44', '46', '48'];
-  const sortedStockEntries = Object.entries(productStock).sort((a, b) => {
-    const indexA = sizeOrder.indexOf(a[0]);
-    const indexB = sizeOrder.indexOf(b[0]);
-    if (indexA === -1 && indexB === -1) return 0;
-    if (indexA === -1) return 1;
-    if (indexB === -1) return -1;
-    return indexA - indexB;
-  });
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 font-sans">
@@ -264,31 +254,70 @@ export default function ProductPage() {
 
           <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
 
-          <div className="space-y-3">
-            <span className="text-xs uppercase tracking-wider text-anthracite font-semibold">Taille & Stock</span>
-            <div className="flex flex-wrap gap-2">
-              {sortedStockEntries.map(([size, stockValue]: [string, any]) => {
-                const isOutOfStock = Number(stockValue) <= 0;
-                return (
-                  <button
-                    key={size}
-                    disabled={isOutOfStock}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-3 py-2.5 border text-xs transition-colors rounded flex flex-col items-center gap-0.5 min-w-[50px] ${
-                      isOutOfStock 
-                        ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through' 
-                        : selectedSize === size 
-                          ? 'border-anthracite bg-anthracite text-white' 
-                          : 'border-gray-300 text-anthracite hover:border-anthracite'
-                    }`}
-                  >
-                    <span className="font-bold">{size}</span>
-                    <span className={`text-[9px] ${selectedSize === size ? 'text-gray-200' : 'text-gray-400'}`}>
-                      {isOutOfStock ? 'Épuisé' : `${stockValue}`}
-                    </span>
-                  </button>
-                );
-              })}
+          {/* SÉLECTION DES TAILLES SUR DEUX LIGNES */}
+          <div className="space-y-4">
+            <span className="text-xs uppercase tracking-wider text-anthracite font-semibold block">Taille & Stock</span>
+            
+            {/* Ligne 1 : Tailles standard (Lettres) */}
+            <div className="space-y-1">
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles standard :</span>
+              <div className="flex flex-wrap gap-2">
+                {['XS', 'S', 'M', 'L', 'XXL'].map((size) => {
+                  const stockValue = Number(productStock[size] || 0);
+                  const isOutOfStock = stockValue <= 0;
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-3 py-2 border text-xs transition-colors rounded flex flex-col items-center min-w-[48px] ${
+                        isOutOfStock 
+                          ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through' 
+                          : selectedSize === size 
+                            ? 'border-anthracite bg-anthracite text-white' 
+                            : 'border-gray-300 text-anthracite hover:border-anthracite'
+                      }`}
+                    >
+                      <span className="font-bold">{size}</span>
+                      <span className={`text-[9px] ${selectedSize === size ? 'text-gray-200' : 'text-gray-400'}`}>
+                        {isOutOfStock ? 'Épuisé' : stockValue}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Ligne 2 : Tailles françaises (34 au 48) positionnées en dessous */}
+            <div className="space-y-1 pt-1">
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles françaises :</span>
+              <div className="flex flex-wrap gap-2">
+                {['34', '36', '38', '40', '42', '44', '46', '48'].map((size) => {
+                  const stockValue = Number(productStock[size] || 0);
+                  const isOutOfStock = stockValue <= 0;
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-3 py-2 border text-xs transition-colors rounded flex flex-col items-center min-w-[44px] ${
+                        isOutOfStock 
+                          ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through' 
+                          : selectedSize === size 
+                            ? 'border-anthracite bg-anthracite text-white' 
+                            : 'border-gray-300 text-anthracite hover:border-anthracite'
+                      }`}
+                    >
+                      <span className="font-bold">{size}</span>
+                      <span className={`text-[9px] ${selectedSize === size ? 'text-gray-200' : 'text-gray-400'}`}>
+                        {isOutOfStock ? 'Épuisé' : stockValue}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
