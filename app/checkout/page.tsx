@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 
 export default function CheckoutPage() {
   const [items, setItems] = useState<any[]>([]);
-  const [shippingMethod, setShippingMethod] = useState('mondial_relay');
+  const [shippingMethod, setShippingMethod] = useState('colissimo');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,13 +41,10 @@ export default function CheckoutPage() {
 
   const subtotal = items.reduce((acc, item) => acc + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
   
-  // --- RÈGLE DES FRAIS DE PORT & GRATUITÉ DÈS 120 € ---
   const isFreeShipping = subtotal >= 120;
   
   let shippingCost = 0;
-  if (shippingMethod === 'mondial_relay') {
-    shippingCost = isFreeShipping ? 0 : 4.90;
-  } else if (shippingMethod === 'colissimo') {
+  if (shippingMethod === 'colissimo') {
     shippingCost = isFreeShipping ? 0 : 8.90;
   } else if (shippingMethod === 'pickup') {
     shippingCost = 0; // Click & Collect gratuit
@@ -155,23 +152,6 @@ export default function CheckoutPage() {
           {/* SÉLECTION DES MODES DE LIVRAISON */}
           <div className="border-t pt-4 space-y-3 text-xs">
             <p className="font-semibold uppercase tracking-wider text-anthracite mb-2">Mode de livraison</p>
-            
-            <label className="flex items-start gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200">
-              <input 
-                type="radio" 
-                name="shipping" 
-                checked={shippingMethod === 'mondial_relay'} 
-                onChange={() => setShippingMethod('mondial_relay')} 
-                className="mt-0.5"
-              />
-              <div>
-                <span className="font-medium text-anthracite">Mondial Relay (Point Relais) — 3 à 5 jours ouvrables</span>
-                <p className="text-gray-400 text-[10px]">Vous choisirez votre point relais juste après le paiement.</p>
-                <span className="font-semibold text-anthracite mt-0.5 block">
-                  {isFreeShipping ? <strong className="text-green-700">Offerte (dès 120 €)</strong> : '4.90 €'}
-                </span>
-              </div>
-            </label>
 
             <label className="flex items-start gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200">
               <input 
