@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 
 export default function CheckoutPage() {
   const [items, setItems] = useState<any[]>([]);
-  const [shippingMethod, setShippingMethod] = useState('pickup');
+  const [shippingMethod, setShippingMethod] = useState('mondial_relay');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,9 +41,18 @@ export default function CheckoutPage() {
 
   const subtotal = items.reduce((acc, item) => acc + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
   
-  // --- LIVRAISON OFFERTE À PARTIR DE 120 € ---
+  // --- RÈGLE DES FRAIS DE PORT & GRATUITÉ DÈS 120 € ---
   const isFreeShipping = subtotal >= 120;
-  const shippingCost = shippingMethod === 'europe' ? (isFreeShipping ? 0 : 15) : 0;
+  
+  let shippingCost = 0;
+  if (shippingMethod === 'mondial_relay') {
+    shippingCost = isFreeShipping ? 0 : 4.90;
+  } else if (shippingMethod === 'colissimo') {
+    shippingCost = isFreeShipping ? 0 : 8.90;
+  } else if (shippingMethod === 'pickup') {
+    shippingCost = 0; // Click & Collect gratuit
+  }
+
   const total = subtotal + shippingCost;
 
   const handleStripeCheckout = async () => {
@@ -143,27 +152,57 @@ export default function CheckoutPage() {
             ))}
           </div>
 
+          {/* SÉLECTION DES MODES DE LIVRAISON */}
           <div className="border-t pt-4 space-y-3 text-xs">
             <p className="font-semibold uppercase tracking-wider text-anthracite mb-2">Mode de livraison</p>
-            <label className="flex items-center gap-3 cursor-pointer">
+            
+            <label className="flex items-start gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200">
+              <input 
+                type="radio" 
+                name="shipping" 
+                checked={shippingMethod === 'mondial_relay'} 
+                onChange={() => setShippingMethod('mondial_relay')} 
+                className="mt-0.5"
+              />
+              <div>
+                <span className="font-medium text-anthracite">Mondial Relay (Point Relais) — 3 à 5 jours ouvrables</span>
+                <p className="text-gray-400 text-[10px]">Vous choisirez votre point relais juste après le paiement.</p>
+                <span className="font-semibold text-anthracite mt-0.5 block">
+                  {isFreeShipping ? <strong className="text-green-700">Offerte (dès 120 €)</strong> : '4.90 €'}
+                </span>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200">
+              <input 
+                type="radio" 
+                name="shipping" 
+                checked={shippingMethod === 'colissimo'} 
+                onChange={() => setShippingMethod('colissimo')} 
+                className="mt-0.5"
+              />
+              <div>
+                <span className="font-medium text-anthracite">Livraison à domicile Colissimo — 1 à 2 jours ouvrables</span>
+                <p className="text-gray-400 text-[10px]">Livraison directe à votre adresse.</p>
+                <span className="font-semibold text-anthracite mt-0.5 block">
+                  {isFreeShipping ? <strong className="text-green-700">Offerte (dès 120 €)</strong> : '8.90 €'}
+                </span>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200">
               <input 
                 type="radio" 
                 name="shipping" 
                 checked={shippingMethod === 'pickup'} 
                 onChange={() => setShippingMethod('pickup')} 
+                className="mt-0.5"
               />
-              <span>Click & Collect (La Baule) - Gratuit</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input 
-                type="radio" 
-                name="shipping" 
-                checked={shippingMethod === 'europe'} 
-                onChange={() => setShippingMethod('europe')} 
-              />
-              <span>
-                Livraison à domicile (Europe) - {isFreeShipping ? <strong className="text-green-700">Offerte (dès 120 €)</strong> : '15.00 €'}
-              </span>
+              <div>
+                <span className="font-medium text-anthracite">Click & Collect (Boutique La Baule)</span>
+                <p className="text-gray-400 text-[10px]">Retrait gratuit directement en boutique (49 Avenue de Gaulle).</p>
+                <span className="font-semibold text-green-700 mt-0.5 block">Gratuit</span>
+              </div>
             </label>
           </div>
 
@@ -187,7 +226,7 @@ export default function CheckoutPage() {
             disabled={loading}
             className="w-full bg-anthracite text-white py-4 text-xs uppercase tracking-widest hover:bg-opacity-90 transition-colors rounded disabled:opacity-50 cursor-pointer"
           >
-            {loading ? 'Redirection en cours...' : 'Redirection vers Stripe...'}
+            {loading ? 'Redirection en cours...' : 'Procéder au paiement sécurisé'}
           </button>
         </div>
       )}
