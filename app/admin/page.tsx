@@ -13,7 +13,10 @@ export default function AdminPage() {
     title: '',
     slug: '',
     price: '',
-    stock: '10',
+    stockXS: '0',
+    stockS: '5',
+    stockM: '5',
+    stockL: '2',
     category: 'Vestes',
     description: '',
   });
@@ -72,12 +75,20 @@ export default function AdminPage() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const stockObject = {
+      XS: parseInt(newProduct.stockXS) || 0,
+      S: parseInt(newProduct.stockS) || 0,
+      M: parseInt(newProduct.stockM) || 0,
+      L: parseInt(newProduct.stockL) || 0,
+    };
+
     const { error } = await supabase.from('products').insert([
       {
         title: newProduct.title,
         slug: newProduct.slug || newProduct.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         price: parseFloat(newProduct.price),
-        stock: parseInt(newProduct.stock) || 10,
+        stock: stockObject,
         category: newProduct.category,
         description: newProduct.description,
       }
@@ -87,7 +98,7 @@ export default function AdminPage() {
       alert('Erreur lors de l\'ajout : ' + error.message);
     } else {
       alert('Produit ajouté avec succès !');
-      setNewProduct({ title: '', slug: '', price: '', stock: '10', category: 'Vestes', description: '' });
+      setNewProduct({ title: '', slug: '', price: '', stockXS: '0', stockS: '5', stockM: '5', stockL: '2', category: 'Vestes', description: '' });
       fetchData();
     }
   };
@@ -136,20 +147,37 @@ export default function AdminPage() {
                 onChange={e => setNewProduct({...newProduct, price: e.target.value})} required
                 className="border p-3 rounded"
               />
-              <input 
-                type="number" placeholder="Stock initial (ex: 10)" value={newProduct.stock}
-                onChange={e => setNewProduct({...newProduct, stock: e.target.value})} required
-                className="border p-3 rounded"
-              />
               <select 
                 value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}
-                className="border p-3 rounded bg-white md:col-span-2"
+                className="border p-3 rounded bg-white"
               >
                 <option value="Vestes">Vestes</option>
                 <option value="Manteaux">Manteaux</option>
                 <option value="Maille">Maille</option>
                 <option value="Accessoires">Accessoires</option>
               </select>
+
+              {/* GESTION DES STOCKS PAR TAILLE */}
+              <div className="md:col-span-2 grid grid-cols-4 gap-2 border p-3 rounded bg-gray-50">
+                <span className="col-span-4 font-semibold text-gray-700 mb-1">Stocks par taille :</span>
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-1">XS</label>
+                  <input type="number" value={newProduct.stockXS} onChange={e => setNewProduct({...newProduct, stockXS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-1">S</label>
+                  <input type="number" value={newProduct.stockS} onChange={e => setNewProduct({...newProduct, stockS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-1">M</label>
+                  <input type="number" value={newProduct.stockM} onChange={e => setNewProduct({...newProduct, stockM: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-1">L</label>
+                  <input type="number" value={newProduct.stockL} onChange={e => setNewProduct({...newProduct, stockL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                </div>
+              </div>
+
               <textarea 
                 placeholder="Description de la pièce..." value={newProduct.description}
                 onChange={e => setNewProduct({...newProduct, description: e.target.value})}
