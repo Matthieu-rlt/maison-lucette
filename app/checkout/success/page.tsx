@@ -33,7 +33,7 @@ export default function CheckoutSuccessPage() {
           Votre pièce d'exception de la Maison Lucette sera préparée avec le plus grand soin.
         </p>
 
-        {/* SECTION SÉLECTION POINT RELAIS FIABLE */}
+        {/* SECTION LIVRAISON POINT RELAIS */}
         <div className="border-t border-gray-100 pt-6 mt-6 space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-anthracite">
             📦 Livraison en Point Relais Mondial Relay
@@ -44,7 +44,7 @@ export default function CheckoutSuccessPage() {
 
           <div className="py-6 bg-gray-50 border rounded-lg space-y-4">
             <a 
-              href="https://www.mondialrelay.fr/trouver-le-plus-proche-de-chez-moi/" 
+              href="https://www.mondialrelay.fr/trouver-le-point-relais-le-plus-proche-de-chez-moi/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-block bg-anthracite text-white px-8 py-4 text-xs uppercase tracking-widest rounded hover:bg-opacity-90 transition-colors shadow-sm"
