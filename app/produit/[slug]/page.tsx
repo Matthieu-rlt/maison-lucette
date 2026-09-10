@@ -14,6 +14,10 @@ export default function ProductPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
+  
+  // États pour la galerie d'images
+  const [images, setImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const SUPABASE_STORAGE_URL = "https://lujfahankslcpcywiugh.supabase.co/storage/v1/object/public/products";
 
@@ -27,11 +31,19 @@ export default function ProductPage() {
 
       if (data) {
         setProduct(data);
-        // Utilisation de data.stock au lieu de data.sizes
         if (data.stock && typeof data.stock === 'object') {
           const firstAvailable = Object.keys(data.stock).find(s => data.stock[s] > 0);
           if (firstAvailable) setSelectedSize(firstAvailable);
         }
+
+        // Génération automatique des URLs des images (de -1 à -4 par exemple)
+        // On teste les indices de 1 à 4
+        const imgList: string[] = [];
+        for (let i = 1; i <= 4; i++) {
+          imgList.push(`${SUPABASE_STORAGE_URL}/${data.slug}-${i}.jpg`);
+        }
+        setImages(imgList);
+        setCurrentImageIndex(0);
 
         try {
           const favs = JSON.parse(localStorage.getItem('maison_lucette_favorites') || '[]');
@@ -47,6 +59,18 @@ export default function ProductPage() {
     const savedCart = JSON.parse(localStorage.getItem('maison_lucette_cart') || '[]');
     setCartItems(savedCart);
   }, [slug]);
+
+  const nextImage = () => {
+    if (images.length > 0) {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (images.length > 0) {
+      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    }
+  };
 
   const toggleFavorite = () => {
     if (!product) return;
@@ -79,7 +103,6 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!product) return;
 
-    // Vérification du stock sur l'objet product.stock
     if (product.stock && product.stock[selectedSize] <= 0) {
       alert("Cette taille est actuellement épuisée.");
       return;
@@ -131,7 +154,6 @@ export default function ProductPage() {
     return <div className="max-w-7xl mx-auto px-4 py-32 text-center text-gray-500">Produit introuvable.</div>;
   }
 
-  // Détermination du stock à afficher depuis la colonne product.stock
   let productStock = { XS: 0, S: 0, M: 0, L: 0, XL: 0 };
   if (product.stock) {
     if (typeof product.stock === 'object') {
@@ -148,28 +170,69 @@ export default function ProductPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 font-sans">
       <div className="grid md:grid-cols-2 gap-12">
-        <div className="relative aspect-[3/4] bg-gray-100 rounded overflow-hidden">
-          <img 
-            src={`${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`} 
-            alt={product.title} 
-            className="w-full h-full object-cover"
-          />
-          <button
-            onClick={toggleFavorite}
-            className="absolute top-4 right-4 p-2.5 bg-white/80 hover:bg-white rounded-full transition-colors shadow-sm cursor-pointer"
-            aria-label="Favoris"
-          >
-            <svg 
-              className={`w-5 h-5 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-600 fill-transparent'}`} 
-              stroke="currentColor" 
-              strokeWidth="1.5" 
-              viewBox="0 0 24 24"
+        
+        {/* COLONNE GAUCHE : GALERIE DE PHOTOS */}
+        <div className="space-y-4">
+          <div className="relative aspect-[3/4] bg-gray-100 rounded overflow-hidden group">
+            <img 
+              src={images[currentImageIndex] || `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`} 
+              alt={product.title} 
+              className="w-full h-full object-cover transition-all duration-300"
+            />
+
+            {/* Flèches de navigation semi-transparentes */}
+            {images.length > 1 && (
+              <>
+                <button 
+                  onClick={prevImage}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full opacity-70 group-hover:opacity-100 transition-opacity"
+                  aria-label="Image précédente"
+                >
+                  ❮
+                </button>
+                <button 
+                  onClick={nextImage}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full opacity-70 group-hover:opacity-100 transition-opacity"
+                  aria-label="Image suivante"
+                >
+                  ❯
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={toggleFavorite}
+              className="absolute top-4 right-4 p-2.5 bg-white/80 hover:bg-white rounded-full transition-colors shadow-sm cursor-pointer"
+              aria-label="Favoris"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-            </svg>
-          </button>
+              <svg 
+                className={`w-5 h-5 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-600 fill-transparent'}`} 
+                stroke="currentColor" 
+                strokeWidth="1.5" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Miniatures en dessous */}
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {images.map((imgSrc, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentImageIndex(idx)}
+                className={`relative w-20 aspect-[3/4] rounded overflow-hidden border-2 transition-all flex-shrink-0 ${
+                  currentImageIndex === idx ? 'border-anthracite opacity-100 scale-105' : 'border-transparent opacity-60 hover:opacity-100'
+                }`}
+              >
+                <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
         </div>
 
+        {/* COLONNE DROITE : INFORMATIONS PRODUIT */}
         <div className="space-y-6">
           <div>
             <span className="text-xs uppercase tracking-widest text-gray-400">{product.category}</span>
