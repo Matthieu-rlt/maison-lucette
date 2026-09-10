@@ -14,6 +14,7 @@ interface Product {
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('Tous');
   const SUPABASE_STORAGE_URL = "https://lujfahankslcpcywiugh.supabase.co/storage/v1/object/public/products";
 
   useEffect(() => {
@@ -23,6 +24,12 @@ export default function Home() {
     }
     fetchProducts();
   }, []);
+
+  const categories = ['Tous', 'Vestes', 'Manteaux', 'Maille', 'Accessoires'];
+
+  const filteredProducts = selectedCategory === 'Tous' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
 
   return (
     <div className="font-sans bg-creme min-h-screen text-anthracite">
@@ -49,23 +56,37 @@ export default function Home() {
       </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="flex justify-between items-end mb-12 border-b border-gray-200 pb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 border-b border-gray-200 pb-6 gap-6">
           <div>
             <span className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Nouveautés</span>
             <h2 className="text-3xl font-serif text-anthracite">Les Incontournables</h2>
           </div>
-          <Link href="/boutique" className="text-xs uppercase tracking-widest text-sable hover:underline font-bold">
-            Voir tout le catalogue →
-          </Link>
+
+          {/* SYSTÈME DE FILTRES PAR CATÉGORIE */}
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-2 text-xs uppercase tracking-widest transition-all rounded ${
+                  selectedCategory === cat
+                    ? 'bg-anthracite text-white font-bold'
+                    : 'bg-white text-anthracite border border-gray-200 hover:border-anthracite'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {products.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
-            <p className="mb-4">Aucun produit pour le moment.</p>
+            <p className="mb-4">Aucun produit dans cette catégorie pour le moment.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-            {products.slice(0, 3).map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard 
                 key={product.slug} 
                 product={{
@@ -80,6 +101,12 @@ export default function Home() {
             ))}
           </div>
         )}
+
+        <div className="mt-16 text-center">
+          <Link href="/boutique" className="inline-block border border-anthracite px-8 py-4 text-xs uppercase tracking-widest hover:bg-anthracite hover:text-white transition-colors">
+            Voir tout le catalogue →
+          </Link>
+        </div>
       </section>
     </div>
   );
