@@ -19,7 +19,16 @@ export default function CheckoutSuccessPage() {
     localStorage.removeItem('maison_lucette_cart');
     window.dispatchEvent(new Event('cart-updated'));
 
-    // Chargement dynamique du script du Widget Mondial Relay et de jQuery
+    // 1. Injection du CSS Mondial Relay
+    if (!document.getElementById('mr-widget-css')) {
+      const link = document.createElement('link');
+      link.id = 'mr-widget-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://widget.mondialrelay.com/parcelshop-picker/v1_0/styles/jquery.plugin.mondialrelay.parcelshoppicker.css';
+      document.head.appendChild(link);
+    }
+
+    // 2. Chargement de jQuery puis du plugin
     const loadMondialRelayWidget = () => {
       if ((window as any).jQuery && (window as any).jQuery.fn.MR_ParcelShopPicker) {
         initWidget();
@@ -52,7 +61,7 @@ export default function CheckoutSuccessPage() {
       if ((window as any).jQuery && (window as any).jQuery.fn.MR_ParcelShopPicker) {
         (window as any).jQuery('#Zone_Widget').MR_ParcelShopPicker({
           Target: '#Target_ParcelShop',
-          Brand: 'BDTEST', // Code enseigne test (à remplacer par ton code enseigne définitif fourni par Mondial Relay)
+          Brand: 'BDTEST', 
           Country: 'FR',
           PostCode: '', 
           Colis_Poids: '1000',
@@ -64,7 +73,12 @@ export default function CheckoutSuccessPage() {
       }
     };
 
-    loadMondialRelayWidget();
+    // Petit délai pour laisser le DOM se dessiner
+    const timer = setTimeout(() => {
+      loadMondialRelayWidget();
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -81,7 +95,7 @@ export default function CheckoutSuccessPage() {
           Votre pièce d'exception de la Maison Lucette sera préparée avec le plus grand soin.
         </p>
 
-        {/* SECTION WIDGET MONDIAL RELAY INTÉGRÉ */}
+        {/* SECTION WIDGET MONDIAL RELAY */}
         <div className="border-t border-gray-100 pt-6 mt-6 space-y-4 text-left">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-anthracite text-center">
             📦 Choisissez votre Point Relais Mondial Relay :
@@ -90,10 +104,8 @@ export default function CheckoutSuccessPage() {
             Sélectionnez directement sur la carte ci-dessous le point de retrait souhaité pour votre colis.
           </p>
 
-          {/* Conteneur obligatoire de la carte interactive */}
-          <div id="Zone_Widget" className="min-h-[450px] border rounded bg-white p-2"></div>
+          <div id="Zone_Widget" className="min-h-[500px] border rounded bg-white p-2"></div>
           
-          {/* Champ caché pour récupérer l'ID du point relais */}
           <input type="hidden" id="Target_ParcelShop" />
 
           {selectedRelay && (
