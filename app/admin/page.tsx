@@ -18,6 +18,14 @@ export default function AdminPage() {
     stockM: '5',
     stockL: '2',
     stockXXL: '0',
+    stock34: '0',
+    stock36: '0',
+    stock38: '5',
+    stock40: '5',
+    stock42: '2',
+    stock44: '0',
+    stock46: '0',
+    stock48: '0',
     category: 'Vestes',
     description: '',
   });
@@ -82,6 +90,14 @@ export default function AdminPage() {
       M: parseInt(newProduct.stockM) || 0,
       L: parseInt(newProduct.stockL) || 0,
       XXL: parseInt(newProduct.stockXXL) || 0,
+      '34': parseInt(newProduct.stock34) || 0,
+      '36': parseInt(newProduct.stock36) || 0,
+      '38': parseInt(newProduct.stock38) || 0,
+      '40': parseInt(newProduct.stock40) || 0,
+      '42': parseInt(newProduct.stock42) || 0,
+      '44': parseInt(newProduct.stock44) || 0,
+      '46': parseInt(newProduct.stock46) || 0,
+      '48': parseInt(newProduct.stock48) || 0,
     };
 
     const { error } = await supabase.from('products').insert([
@@ -99,7 +115,12 @@ export default function AdminPage() {
       alert('Erreur lors de l\'ajout : ' + error.message);
     } else {
       alert('Produit ajouté avec succès !');
-      setNewProduct({ title: '', slug: '', price: '', stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXXL: '0', category: 'Vestes', description: '' });
+      setNewProduct({ 
+        title: '', slug: '', price: '', 
+        stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXXL: '0', 
+        stock34: '0', stock36: '0', stock38: '5', stock40: '5', stock42: '2', stock44: '0', stock46: '0', stock48: '0', 
+        category: 'Vestes', description: '' 
+      });
       fetchData();
     }
   };
@@ -158,28 +179,68 @@ export default function AdminPage() {
                 <option value="Accessoires">Accessoires</option>
               </select>
 
-              {/* GESTION DES STOCKS PAR TAILLE (XS, S, M, L, XXL) */}
-              <div className="md:col-span-2 grid grid-cols-5 gap-2 border p-3 rounded bg-gray-50">
-                <span className="col-span-5 font-semibold text-gray-700 mb-1">Stocks par taille :</span>
-                <div>
-                  <label className="block text-[10px] text-gray-500 mb-1">XS</label>
-                  <input type="number" value={newProduct.stockXS} onChange={e => setNewProduct({...newProduct, stockXS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+              {/* GESTION DES STOCKS PAR TAILLE (Lettres + Numériques 34 à 48) */}
+              <div className="md:col-span-2 border p-3 rounded bg-gray-50 space-y-3">
+                <span className="block font-semibold text-gray-700 mb-1">Stocks par taille :</span>
+                
+                {/* Ligne 1 : Tailles Lettres */}
+                <div className="grid grid-cols-5 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">XS</label>
+                    <input type="number" value={newProduct.stockXS} onChange={e => setNewProduct({...newProduct, stockXS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">S</label>
+                    <input type="number" value={newProduct.stockS} onChange={e => setNewProduct({...newProduct, stockS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">M</label>
+                    <input type="number" value={newProduct.stockM} onChange={e => setNewProduct({...newProduct, stockM: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">L</label>
+                    <input type="number" value={newProduct.stockL} onChange={e => setNewProduct({...newProduct, stockL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">XXL</label>
+                    <input type="number" value={newProduct.stockXXL} onChange={e => setNewProduct({...newProduct, stockXXL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 mb-1">S</label>
-                  <input type="number" value={newProduct.stockS} onChange={e => setNewProduct({...newProduct, stockS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 mb-1">M</label>
-                  <input type="number" value={newProduct.stockM} onChange={e => setNewProduct({...newProduct, stockM: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 mb-1">L</label>
-                  <input type="number" value={newProduct.stockL} onChange={e => setNewProduct({...newProduct, stockL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 mb-1">XXL</label>
-                  <input type="number" value={newProduct.stockXXL} onChange={e => setNewProduct({...newProduct, stockXXL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+
+                {/* Ligne 2 : Tailles Françaises du 34 au 48 */}
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-2 pt-2 border-t border-gray-200">
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">34</label>
+                    <input type="number" value={newProduct.stock34} onChange={e => setNewProduct({...newProduct, stock34: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">36</label>
+                    <input type="number" value={newProduct.stock36} onChange={e => setNewProduct({...newProduct, stock36: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">38</label>
+                    <input type="number" value={newProduct.stock38} onChange={e => setNewProduct({...newProduct, stock38: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">40</label>
+                    <input type="number" value={newProduct.stock40} onChange={e => setNewProduct({...newProduct, stock40: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">42</label>
+                    <input type="number" value={newProduct.stock42} onChange={e => setNewProduct({...newProduct, stock42: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">44</label>
+                    <input type="number" value={newProduct.stock44} onChange={e => setNewProduct({...newProduct, stock44: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">46</label>
+                    <input type="number" value={newProduct.stock46} onChange={e => setNewProduct({...newProduct, stock46: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 mb-1">48</label>
+                    <input type="number" value={newProduct.stock48} onChange={e => setNewProduct({...newProduct, stock48: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                  </div>
                 </div>
               </div>
 
