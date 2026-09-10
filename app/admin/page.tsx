@@ -50,7 +50,7 @@ export default function AdminPage() {
     
     const allowedEmails = [
       'matthieuriallot@gmail.com',
-      'sandrinejolly7@yahoo.fr'
+      'sandrinelelong613@gmail.com'
     ];
 
     if (user && user.email && allowedEmails.includes(user.email)) {
