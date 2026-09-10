@@ -4,29 +4,67 @@ import Link from 'next/link';
 
 export default function CheckoutSuccessPage() {
   const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [selectedRelay, setSelectedRelay] = useState<any>(null);
 
   useEffect(() => {
-    // 1. On récupère le panier depuis le stockage
     const pendingCheckout = localStorage.getItem('maison_lucette_pending_cart');
-    
     if (pendingCheckout) {
       try {
-        const cartItems = JSON.parse(pendingCheckout);
-        setOrderItems(cartItems);
+        setOrderItems(JSON.parse(pendingCheckout));
       } catch (e) {
         setOrderItems([]);
       }
     }
 
-    // Sécurité anti-duplication
-    const alreadySaved = sessionStorage.getItem('order_saved');
-    if (!alreadySaved) {
-      sessionStorage.setItem('order_saved', 'true');
-    }
-
-    // Nettoyage du panier actif
     localStorage.removeItem('maison_lucette_cart');
     window.dispatchEvent(new Event('cart-updated'));
+
+    // Chargement dynamique du script du Widget Mondial Relay et de jQuery
+    const loadMondialRelayWidget = () => {
+      if ((window as any).jQuery && (window as any).jQuery.fn.MR_ParcelShopPicker) {
+        initWidget();
+      } else {
+        if (!document.getElementById('jquery-script')) {
+          const jqScript = document.createElement('script');
+          jqScript.id = 'jquery-script';
+          jqScript.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+          jqScript.onload = () => loadPlugin();
+          document.body.appendChild(jqScript);
+        } else {
+          loadPlugin();
+        }
+      }
+    };
+
+    const loadPlugin = () => {
+      if (!document.getElementById('mr-widget-script')) {
+        const script = document.createElement('script');
+        script.id = 'mr-widget-script';
+        script.src = 'https://widget.mondialrelay.com/parcelshop-picker/v1_0/scripts/jquery.plugin.mondialrelay.parcelshoppicker.min.js';
+        script.onload = () => initWidget();
+        document.body.appendChild(script);
+      } else {
+        initWidget();
+      }
+    };
+
+    const initWidget = () => {
+      if ((window as any).jQuery && (window as any).jQuery.fn.MR_ParcelShopPicker) {
+        (window as any).jQuery('#Zone_Widget').MR_ParcelShopPicker({
+          Target: '#Target_ParcelShop',
+          Brand: 'BDTEST', // Code enseigne test (à remplacer par ton code enseigne définitif fourni par Mondial Relay)
+          Country: 'FR',
+          PostCode: '', 
+          Colis_Poids: '1000',
+          NbResults: '7',
+          OnParcelShopSelected: (data: any) => {
+            setSelectedRelay(data);
+          }
+        });
+      }
+    };
+
+    loadMondialRelayWidget();
   }, []);
 
   return (
@@ -39,30 +77,32 @@ export default function CheckoutSuccessPage() {
         <h1 className="text-3xl font-serif text-anthracite">Merci pour votre commande !</h1>
         
         <p className="text-sm text-gray-600 leading-relaxed max-w-lg mx-auto">
-          Votre paiement a bien été validé. Un e-mail de confirmation vous a été envoyé. 
+          Votre paiement a bien été validé. Un e-mail de confirmation vous a été envoyé par Stripe. 
           Votre pièce d'exception de la Maison Lucette sera préparée avec le plus grand soin.
         </p>
 
-        {/* SECTION MONDIAL RELAY : CHOIX DU POINT RELAIS */}
-        <div className="border-t border-gray-100 pt-6 mt-6 space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-anthracite">
-            📦 Choisi avec Mondial Relay ? Sélectionnez votre Point Relais :
+        {/* SECTION WIDGET MONDIAL RELAY INTÉGRÉ */}
+        <div className="border-t border-gray-100 pt-6 mt-6 space-y-4 text-left">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-anthracite text-center">
+            📦 Choisissez votre Point Relais Mondial Relay :
           </h2>
-          <p className="text-xs text-gray-500">
-            Si vous avez opté pour la livraison en Point Relais, veuillez cliquer ci-dessous pour choisir l'emplacement de retrait de votre colis.
+          <p className="text-xs text-gray-500 text-center">
+            Sélectionnez directement sur la carte ci-dessous le point de retrait souhaité pour votre colis.
           </p>
 
-          <div className="min-h-[250px] border rounded bg-gray-50 flex flex-col items-center justify-center p-6 space-y-4">
-            <p className="text-xs text-anthracite font-medium">Sélectionnez votre point de retrait favori pour finaliser l'expédition.</p>
-            <a 
-              href="https://www.mondialrelay.fr/trouver-le-plus-proche-de-chez-moi/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-block bg-anthracite text-white px-6 py-3 text-xs uppercase tracking-widest rounded hover:bg-opacity-90 transition-colors"
-            >
-              Ouvrir la carte des points relais ↗
-            </a>
-          </div>
+          {/* Conteneur obligatoire de la carte interactive */}
+          <div id="Zone_Widget" className="min-h-[450px] border rounded bg-white p-2"></div>
+          
+          {/* Champ caché pour récupérer l'ID du point relais */}
+          <input type="hidden" id="Target_ParcelShop" />
+
+          {selectedRelay && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded text-xs space-y-1 text-anthracite">
+              <p className="font-bold text-green-800">Point relais sélectionné avec succès :</p>
+              <p><strong>Nom :</strong> {selectedRelay.Nom}</p>
+              <p><strong>Adresse :</strong> {selectedRelay.Adresse1} {selectedRelay.CP} {selectedRelay.Ville}</p>
+            </div>
+          )}
         </div>
 
         <div className="pt-6">
