@@ -15,7 +15,6 @@ export default function ProductPage() {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // États pour la galerie d'images
   const [images, setImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -36,13 +35,26 @@ export default function ProductPage() {
           if (firstAvailable) setSelectedSize(firstAvailable);
         }
 
-        // Génération automatique des URLs des images (de -1 à -4 par exemple)
-        // On teste les indices de 1 à 4
-        const imgList: string[] = [];
-        for (let i = 1; i <= 4; i++) {
-          imgList.push(`${SUPABASE_STORAGE_URL}/${data.slug}-${i}.jpg`);
+        // Vérification dynamique des images de -1 à -8 sur Supabase
+        const validImages: string[] = [];
+        for (let i = 1; i <= 8; i++) {
+          const url = `${SUPABASE_STORAGE_URL}/${data.slug}-${i}.jpg`;
+          const exists = await new Promise<boolean>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+          });
+          if (exists) {
+            validImages.push(url);
+          }
         }
-        setImages(imgList);
+
+        if (validImages.length === 0) {
+          validImages.push(`${SUPABASE_STORAGE_URL}/${data.slug}-1.jpg`);
+        }
+
+        setImages(validImages);
         setCurrentImageIndex(0);
 
         try {
@@ -180,7 +192,6 @@ export default function ProductPage() {
               className="w-full h-full object-cover transition-all duration-300"
             />
 
-            {/* Flèches de navigation semi-transparentes */}
             {images.length > 1 && (
               <>
                 <button 
@@ -216,7 +227,7 @@ export default function ProductPage() {
             </button>
           </div>
 
-          {/* Miniatures en dessous */}
+          {/* Miniatures dynamiques (uniquement celles qui existent) */}
           <div className="flex gap-3 overflow-x-auto pb-2">
             {images.map((imgSrc, idx) => (
               <button
