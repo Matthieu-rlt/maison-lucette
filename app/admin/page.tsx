@@ -17,6 +17,7 @@ export default function AdminPage() {
     stockS: '5',
     stockM: '5',
     stockL: '2',
+    stockXXL: '0',
     category: 'Vestes',
     description: '',
   });
@@ -24,7 +25,6 @@ export default function AdminPage() {
   useEffect(() => {
     checkAdmin();
 
-    // Écoute en temps réel des changements sur les tables messages et products
     const channel = supabase
       .channel('admin-realtime')
       .on(
@@ -81,6 +81,7 @@ export default function AdminPage() {
       S: parseInt(newProduct.stockS) || 0,
       M: parseInt(newProduct.stockM) || 0,
       L: parseInt(newProduct.stockL) || 0,
+      XXL: parseInt(newProduct.stockXXL) || 0,
     };
 
     const { error } = await supabase.from('products').insert([
@@ -98,7 +99,7 @@ export default function AdminPage() {
       alert('Erreur lors de l\'ajout : ' + error.message);
     } else {
       alert('Produit ajouté avec succès !');
-      setNewProduct({ title: '', slug: '', price: '', stockXS: '0', stockS: '5', stockM: '5', stockL: '2', category: 'Vestes', description: '' });
+      setNewProduct({ title: '', slug: '', price: '', stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXXL: '0', category: 'Vestes', description: '' });
       fetchData();
     }
   };
@@ -157,9 +158,9 @@ export default function AdminPage() {
                 <option value="Accessoires">Accessoires</option>
               </select>
 
-              {/* GESTION DES STOCKS PAR TAILLE */}
-              <div className="md:col-span-2 grid grid-cols-4 gap-2 border p-3 rounded bg-gray-50">
-                <span className="col-span-4 font-semibold text-gray-700 mb-1">Stocks par taille :</span>
+              {/* GESTION DES STOCKS PAR TAILLE (XS, S, M, L, XXL) */}
+              <div className="md:col-span-2 grid grid-cols-5 gap-2 border p-3 rounded bg-gray-50">
+                <span className="col-span-5 font-semibold text-gray-700 mb-1">Stocks par taille :</span>
                 <div>
                   <label className="block text-[10px] text-gray-500 mb-1">XS</label>
                   <input type="number" value={newProduct.stockXS} onChange={e => setNewProduct({...newProduct, stockXS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
@@ -175,6 +176,10 @@ export default function AdminPage() {
                 <div>
                   <label className="block text-[10px] text-gray-500 mb-1">L</label>
                   <input type="number" value={newProduct.stockL} onChange={e => setNewProduct({...newProduct, stockL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-1">XXL</label>
+                  <input type="number" value={newProduct.stockXXL} onChange={e => setNewProduct({...newProduct, stockXXL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
                 </div>
               </div>
 
