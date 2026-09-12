@@ -31,8 +31,12 @@ export default function ProductPage() {
       if (data) {
         setProduct(data);
         if (data.stock && typeof data.stock === 'object') {
-          const firstAvailable = Object.keys(data.stock).find(s => data.stock[s] > 0);
-          if (firstAvailable) setSelectedSize(firstAvailable);
+          if (data.stock['Taille Unique'] !== undefined) {
+            setSelectedSize('Taille Unique');
+          } else {
+            const firstAvailable = Object.keys(data.stock).find(s => data.stock[s] > 0);
+            if (firstAvailable) setSelectedSize(firstAvailable);
+          }
         }
 
         const validImages: string[] = [];
@@ -120,7 +124,7 @@ export default function ProductPage() {
     }
 
     const newItem = {
-      name: `${product.title} (Taille : ${selectedSize})`,
+      name: `${product.title} ${selectedSize !== 'Taille Unique' ? `(Taille : ${selectedSize})` : '(Taille Unique)'}`,
       price: product.price,
       image: `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
       quantity: 1,
@@ -165,21 +169,20 @@ export default function ProductPage() {
     return <div className="max-w-7xl mx-auto px-4 py-32 text-center text-gray-500">Produit introuvable.</div>;
   }
 
-  let productStock: Record<string, any> = { 
-    XS: 0, S: 0, M: 0, L: 0, XXL: 0, 
-    '34': 0, '36': 0, '38': 0, '40': 0, '42': 0, '44': 0, '46': 0, '48': 0 
-  };
+  let productStock: Record<string, any> = {};
   if (product.stock) {
     if (typeof product.stock === 'object') {
-      productStock = { ...productStock, ...product.stock };
+      productStock = product.stock;
     } else if (typeof product.stock === 'string') {
       try {
-        productStock = { ...productStock, ...JSON.parse(product.stock) };
+        productStock = JSON.parse(product.stock);
       } catch (e) {
-        // Garde le défaut
+        productStock = {};
       }
     }
   }
+
+  const isTailleUniqueProduct = productStock['Taille Unique'] !== undefined;
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 font-sans">
@@ -254,71 +257,101 @@ export default function ProductPage() {
 
           <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
 
-          {/* SÉLECTION DES TAILLES SUR DEUX LIGNES */}
+          {/* SÉLECTION DES TAILLES (CONDITIONNELLE : TAILLE UNIQUE OU STANDARD) */}
           <div className="space-y-4">
             <span className="text-xs uppercase tracking-wider text-anthracite font-semibold block">Taille & Stock</span>
             
-            {/* Ligne 1 : Tailles standard (Lettres) */}
-            <div className="space-y-1">
-              <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles standard :</span>
-              <div className="flex flex-wrap gap-2">
-                {['XS', 'S', 'M', 'L', 'XXL'].map((size) => {
-                  const stockValue = Number(productStock[size] || 0);
+            {isTailleUniqueProduct ? (
+              <div>
+                {(() => {
+                  const stockValue = Number(productStock['Taille Unique'] || 0);
                   const isOutOfStock = stockValue <= 0;
                   return (
                     <button
-                      key={size}
                       type="button"
                       disabled={isOutOfStock}
-                      onClick={() => setSelectedSize(size)}
-                      className={`px-3 py-2 border text-xs transition-colors rounded flex flex-col items-center min-w-[48px] ${
+                      onClick={() => setSelectedSize('Taille Unique')}
+                      className={`px-6 py-3 border text-xs transition-colors rounded flex flex-col items-center gap-1 min-w-[140px] ${
                         isOutOfStock 
                           ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through' 
-                          : selectedSize === size 
+                          : selectedSize === 'Taille Unique' 
                             ? 'border-anthracite bg-anthracite text-white' 
                             : 'border-gray-300 text-anthracite hover:border-anthracite'
                       }`}
                     >
-                      <span className="font-bold">{size}</span>
-                      <span className={`text-[9px] ${selectedSize === size ? 'text-gray-200' : 'text-gray-400'}`}>
-                        {isOutOfStock ? 'Épuisé' : stockValue}
+                      <span className="font-bold">Taille Unique</span>
+                      <span className={`text-[10px] ${selectedSize === 'Taille Unique' ? 'text-gray-200' : 'text-gray-400'}`}>
+                        {isOutOfStock ? 'Épuisé' : `${stockValue} en stock`}
                       </span>
                     </button>
                   );
-                })}
+                })()}
               </div>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Ligne 1 : Tailles standard (Lettres) */}
+                <div className="space-y-1">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles standard :</span>
+                  <div className="flex flex-wrap gap-2">
+                    {['XS', 'S', 'M', 'L', 'XXL'].map((size) => {
+                      const stockValue = Number(productStock[size] || 0);
+                      const isOutOfStock = stockValue <= 0;
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          disabled={isOutOfStock}
+                          onClick={() => setSelectedSize(size)}
+                          className={`px-3 py-2 border text-xs transition-colors rounded flex flex-col items-center min-w-[48px] ${
+                            isOutOfStock 
+                              ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through' 
+                              : selectedSize === size 
+                                ? 'border-anthracite bg-anthracite text-white' 
+                                : 'border-gray-300 text-anthracite hover:border-anthracite'
+                          }`}
+                        >
+                          <span className="font-bold">{size}</span>
+                          <span className={`text-[9px] ${selectedSize === size ? 'text-gray-200' : 'text-gray-400'}`}>
+                            {isOutOfStock ? 'Épuisé' : stockValue}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-            {/* Ligne 2 : Tailles françaises (34 au 48) positionnées en dessous */}
-            <div className="space-y-1 pt-1">
-              <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles françaises :</span>
-              <div className="flex flex-wrap gap-2">
-                {['34', '36', '38', '40', '42', '44', '46', '48'].map((size) => {
-                  const stockValue = Number(productStock[size] || 0);
-                  const isOutOfStock = stockValue <= 0;
-                  return (
-                    <button
-                      key={size}
-                      type="button"
-                      disabled={isOutOfStock}
-                      onClick={() => setSelectedSize(size)}
-                      className={`px-3 py-2 border text-xs transition-colors rounded flex flex-col items-center min-w-[44px] ${
-                        isOutOfStock 
-                          ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through' 
-                          : selectedSize === size 
-                            ? 'border-anthracite bg-anthracite text-white' 
-                            : 'border-gray-300 text-anthracite hover:border-anthracite'
-                      }`}
-                    >
-                      <span className="font-bold">{size}</span>
-                      <span className={`text-[9px] ${selectedSize === size ? 'text-gray-200' : 'text-gray-400'}`}>
-                        {isOutOfStock ? 'Épuisé' : stockValue}
-                      </span>
-                    </button>
-                  );
-                })}
+                {/* Ligne 2 : Tailles françaises (34 au 48) */}
+                <div className="space-y-1 pt-1">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles françaises :</span>
+                  <div className="flex flex-wrap gap-2">
+                    {['34', '36', '38', '40', '42', '44', '46', '48'].map((size) => {
+                      const stockValue = Number(productStock[size] || 0);
+                      const isOutOfStock = stockValue <= 0;
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          disabled={isOutOfStock}
+                          onClick={() => setSelectedSize(size)}
+                          className={`px-3 py-2 border text-xs transition-colors rounded flex flex-col items-center min-w-[44px] ${
+                            isOutOfStock 
+                              ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through' 
+                              : selectedSize === size 
+                                ? 'border-anthracite bg-anthracite text-white' 
+                                : 'border-gray-300 text-anthracite hover:border-anthracite'
+                          }`}
+                        >
+                          <span className="font-bold">{size}</span>
+                          <span className={`text-[9px] ${selectedSize === size ? 'text-gray-200' : 'text-gray-400'}`}>
+                            {isOutOfStock ? 'Épuisé' : stockValue}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <button
