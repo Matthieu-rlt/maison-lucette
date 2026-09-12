@@ -24,7 +24,7 @@ export default function ProductPage() {
 
   const SUPABASE_STORAGE_URL = "https://lujfahankslcpcywiugh.supabase.co/storage/v1/object/public/products";
 
-  const knownSizes = ['XS', 'S', 'M', 'L', 'XXL', '34', '36', '38', '40', '42', '44', '46', '48', 'Taille Unique'];
+  const knownSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '34', '36', '38', '40', '42', '44', '46', '48', 'Taille Unique'];
 
   useEffect(() => {
     async function fetchProduct() {
@@ -377,11 +377,11 @@ export default function ProductPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Ligne 1 : Tailles standard (Lettres) */}
+                {/* Ligne 1 : Tailles standard (Lettres incluant XL) */}
                 <div className="space-y-1">
                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles standard :</span>
                   <div className="flex flex-wrap gap-2">
-                    {['XS', 'S', 'M', 'L', 'XXL'].map((size) => {
+                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
                       const stockValue = Number(currentSizes[size] || 0);
                       const isOutOfStock = stockValue <= 0;
                       return (
