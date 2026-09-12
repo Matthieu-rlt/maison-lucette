@@ -21,7 +21,7 @@ export default function CgvPage() {
         <section>
           <h2 className="font-serif text-xl text-anthracite mb-2">Article 3 - Click & Collect et Livraison</h2>
           <p>
-            Le retrait en boutique (Click & Collect) est gratuit et disponible directement au 15 Avenue de Gaulle à La Baule. Les livraisons à domicile sont proposées selon les conditions affichées lors de la commande.
+            Le retrait en boutique (Click & Collect) est gratuit et disponible directement au 49 Avenue de Gaulle à La Baule. Les livraisons à domicile sont proposées selon les conditions affichées lors de la commande.
           </p>
         </section>
 
