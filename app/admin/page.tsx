@@ -19,6 +19,7 @@ export default function AdminPage() {
     stockS: '5',
     stockM: '5',
     stockL: '2',
+    stockXL: '0',
     stockXXL: '0',
     stock34: '0',
     stock36: '0',
@@ -92,6 +93,7 @@ export default function AdminPage() {
       S: parseInt(newProduct.stockS) || 0,
       M: parseInt(newProduct.stockM) || 0,
       L: parseInt(newProduct.stockL) || 0,
+      XL: parseInt(newProduct.stockXL) || 0,
       XXL: parseInt(newProduct.stockXXL) || 0,
       '34': parseInt(newProduct.stock34) || 0,
       '36': parseInt(newProduct.stock36) || 0,
@@ -129,7 +131,7 @@ export default function AdminPage() {
       alert('Produit ajouté avec succès !');
       setNewProduct({ 
         title: '', slug: '', price: '', colors: 'Unique',
-        stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXXL: '0', 
+        stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXL: '0', stockXXL: '0', 
         stock34: '0', stock36: '0', stock38: '5', stock40: '5', stock42: '2', stock44: '0', stock46: '0', stock48: '0', stockTU: '10',
         category: 'Vestes', description: '' 
       });
@@ -235,8 +237,8 @@ export default function AdminPage() {
                   <div className="space-y-3 pt-2 border-t border-gray-200">
                     <span className="block font-semibold text-gray-700 mb-1">Stocks par taille :</span>
                     
-                    {/* Ligne 1 : Tailles Lettres */}
-                    <div className="grid grid-cols-5 gap-2">
+                    {/* Ligne 1 : Tailles Lettres (XS, S, M, L, XL, XXL) */}
+                    <div className="grid grid-cols-6 gap-2">
                       <div>
                         <label className="block text-[10px] text-gray-500 mb-1">XS</label>
                         <input type="number" value={newProduct.stockXS} onChange={e => setNewProduct({...newProduct, stockXS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
@@ -252,6 +254,10 @@ export default function AdminPage() {
                       <div>
                         <label className="block text-[10px] text-gray-500 mb-1">L</label>
                         <input type="number" value={newProduct.stockL} onChange={e => setNewProduct({...newProduct, stockL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-500 mb-1">XL</label>
+                        <input type="number" value={newProduct.stockXL} onChange={e => setNewProduct({...newProduct, stockXL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
                       </div>
                       <div>
                         <label className="block text-[10px] text-gray-500 mb-1">XXL</label>
