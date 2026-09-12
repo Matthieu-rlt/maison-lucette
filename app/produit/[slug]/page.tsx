@@ -10,7 +10,11 @@ export default function ProductPage() {
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSize, setSelectedSize] = useState('38');
+  
+  const [colors, setColors] = useState<string[]>([]);
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  
   const [cartOpen, setCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -30,35 +34,24 @@ export default function ProductPage() {
 
       if (data) {
         setProduct(data);
-        if (data.stock && typeof data.stock === 'object') {
-          if (data.stock['Taille Unique'] !== undefined) {
-            setSelectedSize('Taille Unique');
-          } else {
-            const firstAvailable = Object.keys(data.stock).find(s => data.stock[s] > 0);
-            if (firstAvailable) setSelectedSize(firstAvailable);
+        
+        let stockObj = data.stock;
+        if (typeof stockObj === 'string') {
+          try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
+        }
+
+        const availableColors = Object.keys(stockObj || {});
+        if (availableColors.length > 0) {
+          setColors(availableColors);
+          setSelectedColor(availableColors[0]);
+          
+          // Sélectionner la première taille dispo pour cette première couleur
+          const firstColorStock = stockObj[availableColors[0]];
+          if (firstColorStock && typeof firstColorStock === 'object') {
+            const firstSize = Object.keys(firstColorStock).find(s => firstColorStock[s] > 0) || Object.keys(firstColorStock)[0];
+            setSelectedSize(firstSize);
           }
         }
-
-        const validImages: string[] = [];
-        for (let i = 1; i <= 8; i++) {
-          const url = `${SUPABASE_STORAGE_URL}/${data.slug}-${i}.jpg`;
-          const exists = await new Promise<boolean>((resolve) => {
-            const img = new Image();
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(false);
-            img.src = url;
-          });
-          if (exists) {
-            validImages.push(url);
-          }
-        }
-
-        if (validImages.length === 0) {
-          validImages.push(`${SUPABASE_STORAGE_URL}/${data.slug}-1.jpg`);
-        }
-
-        setImages(validImages);
-        setCurrentImageIndex(0);
 
         try {
           const favs = JSON.parse(localStorage.getItem('maison_lucette_favorites') || '[]');
@@ -74,6 +67,67 @@ export default function ProductPage() {
     const savedCart = JSON.parse(localStorage.getItem('maison_lucette_cart') || '[]');
     setCartItems(savedCart);
   }, [slug]);
+
+  // Chargement dynamique des images en fonction de la couleur sélectionnée
+  useEffect(() => {
+    if (!product || !selectedColor) return;
+
+    async function loadImagesForColor() {
+      const colorSlug = selectedColor.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const validImages: string[] = [];
+
+      // Vérifie les images avec la couleur (ex: slug-orange-1.jpg)
+      for (let i = 1; i <= 8; i++) {
+        const url = `${SUPABASE_STORAGE_URL}/${product.slug}-${colorSlug}-${i}.jpg`;
+        const exists = await new Promise<boolean>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = url;
+        });
+        if (exists) {
+          validImages.push(url);
+        }
+      }
+
+      // Si aucune image spécifique à la couleur, fallback sur les images standard du produit
+      if (validImages.length === 0) {
+        for (let i = 1; i <= 8; i++) {
+          const url = `${SUPABASE_STORAGE_URL}/${product.slug}-${i}.jpg`;
+          const exists = await new Promise<boolean>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+          });
+          if (exists) {
+            validImages.push(url);
+          }
+        }
+      }
+
+      if (validImages.length === 0) {
+        validImages.push(`${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`);
+      }
+
+      setImages(validImages);
+      setCurrentImageIndex(0);
+    }
+
+    loadImagesForColor();
+  }, [selectedColor, product]);
+
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color);
+    // Mettre à jour la première taille disponible pour cette nouvelle couleur
+    let stockObj = product.stock;
+    if (typeof stockObj === 'string') {
+      try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
+    }
+    const colorStock = stockObj[color] || {};
+    const firstAvailableSize = Object.keys(colorStock).find(s => colorStock[s] > 0) || Object.keys(colorStock)[0];
+    if (firstAvailableSize) setSelectedSize(firstAvailableSize);
+  };
 
   const nextImage = () => {
     if (images.length > 0) {
@@ -118,16 +172,27 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!product) return;
 
-    if (product.stock && product.stock[selectedSize] <= 0) {
-      alert("Cette taille est actuellement épuisée.");
+    let stockObj = product.stock;
+    if (typeof stockObj === 'string') {
+      try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
+    }
+
+    const currentStock = stockObj[selectedColor]?.[selectedSize] ?? 0;
+    if (currentStock <= 0) {
+      alert("Cette combinaison couleur/taille est actuellement épuisée.");
       return;
     }
 
+    const itemLabel = selectedColor && selectedColor !== 'Unique' 
+      ? `${product.title} (Couleur : ${selectedColor} / Taille : ${selectedSize})`
+      : `${product.title} (Taille : ${selectedSize})`;
+
     const newItem = {
-      name: `${product.title} ${selectedSize !== 'Taille Unique' ? `(Taille : ${selectedSize})` : '(Taille Unique)'}`,
+      name: itemLabel,
       price: product.price,
-      image: `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
+      image: images[0] || `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
       quantity: 1,
+      color: selectedColor,
       size: selectedSize,
     };
 
@@ -169,20 +234,13 @@ export default function ProductPage() {
     return <div className="max-w-7xl mx-auto px-4 py-32 text-center text-gray-500">Produit introuvable.</div>;
   }
 
-  let productStock: Record<string, any> = {};
-  if (product.stock) {
-    if (typeof product.stock === 'object') {
-      productStock = product.stock;
-    } else if (typeof product.stock === 'string') {
-      try {
-        productStock = JSON.parse(product.stock);
-      } catch (e) {
-        productStock = {};
-      }
-    }
+  let productStock = product.stock;
+  if (typeof productStock === 'string') {
+    try { productStock = JSON.parse(productStock); } catch (e) { productStock = {}; }
   }
 
-  const isTailleUniqueProduct = productStock['Taille Unique'] !== undefined;
+  const currentSizes = productStock[selectedColor] || {};
+  const isTailleUniqueProduct = currentSizes['Taille Unique'] !== undefined;
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 font-sans">
@@ -257,14 +315,39 @@ export default function ProductPage() {
 
           <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
 
-          {/* SÉLECTION DES TAILLES (CONDITIONNELLE : TAILLE UNIQUE OU STANDARD) */}
+          {/* SÉLECTION DES COULEURS */}
+          {colors.length > 1 && (
+            <div className="space-y-2">
+              <span className="text-xs uppercase tracking-wider text-anthracite font-semibold block">
+                Couleur : <span className="font-normal text-gray-600">{selectedColor}</span>
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {colors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => handleColorChange(color)}
+                    className={`px-4 py-2 border text-xs transition-colors rounded ${
+                      selectedColor === color 
+                        ? 'border-anthracite bg-anthracite text-white font-semibold' 
+                        : 'border-gray-300 text-anthracite hover:border-anthracite bg-white'
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SÉLECTION DES TAILLES POUR LA COULEUR CHOISIE */}
           <div className="space-y-4">
             <span className="text-xs uppercase tracking-wider text-anthracite font-semibold block">Taille & Stock</span>
             
             {isTailleUniqueProduct ? (
               <div>
                 {(() => {
-                  const stockValue = Number(productStock['Taille Unique'] || 0);
+                  const stockValue = Number(currentSizes['Taille Unique'] || 0);
                   const isOutOfStock = stockValue <= 0;
                   return (
                     <button
@@ -294,7 +377,8 @@ export default function ProductPage() {
                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles standard :</span>
                   <div className="flex flex-wrap gap-2">
                     {['XS', 'S', 'M', 'L', 'XXL'].map((size) => {
-                      const stockValue = Number(productStock[size] || 0);
+                      if (currentSizes[size] === undefined) return null;
+                      const stockValue = Number(currentSizes[size] || 0);
                       const isOutOfStock = stockValue <= 0;
                       return (
                         <button
@@ -325,7 +409,8 @@ export default function ProductPage() {
                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles françaises :</span>
                   <div className="flex flex-wrap gap-2">
                     {['34', '36', '38', '40', '42', '44', '46', '48'].map((size) => {
-                      const stockValue = Number(productStock[size] || 0);
+                      if (currentSizes[size] === undefined) return null;
+                      const stockValue = Number(currentSizes[size] || 0);
                       const isOutOfStock = stockValue <= 0;
                       return (
                         <button
