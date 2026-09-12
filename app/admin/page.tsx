@@ -8,28 +8,17 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  const [isTailleUnique, setIsTailleUnique] = useState(false);
   
   const [newProduct, setNewProduct] = useState({
     title: '',
     slug: '',
     price: '',
-    stockXS: '0',
-    stockS: '5',
-    stockM: '5',
-    stockL: '2',
-    stockXXL: '0',
-    stock34: '0',
-    stock36: '0',
-    stock38: '5',
-    stock40: '5',
-    stock42: '2',
-    stock44: '0',
-    stock46: '0',
-    stock48: '0',
-    stockTU: '10',
+    colors: 'Unique', // Ex: "Orange, Bleu" ou "Unique"
+    isTailleUnique: false,
     category: 'Vestes',
     description: '',
+    // Stocks par défaut (on gérera dynamiquement par couleur)
+    defaultStock: '5'
   });
 
   useEffect(() => {
@@ -82,23 +71,34 @@ export default function AdminPage() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const stockObject = isTailleUnique ? {
-      'Taille Unique': parseInt(newProduct.stockTU) || 0
-    } : {
-      XS: parseInt(newProduct.stockXS) || 0,
-      S: parseInt(newProduct.stockS) || 0,
-      M: parseInt(newProduct.stockM) || 0,
-      L: parseInt(newProduct.stockL) || 0,
-      XXL: parseInt(newProduct.stockXXL) || 0,
-      '34': parseInt(newProduct.stock34) || 0,
-      '36': parseInt(newProduct.stock36) || 0,
-      '38': parseInt(newProduct.stock38) || 0,
-      '40': parseInt(newProduct.stock40) || 0,
-      '42': parseInt(newProduct.stock42) || 0,
-      '44': parseInt(newProduct.stock44) || 0,
-      '46': parseInt(newProduct.stock46) || 0,
-      '48': parseInt(newProduct.stock48) || 0,
-    };
+    // Découpage des couleurs (ex: "Orange, Bleu" -> ["Orange", "Bleu"])
+    const colorList = newProduct.colors.split(',').map(c => c.trim()).filter(Boolean);
+    
+    const stockObject: Record<string, any> = {};
+
+    colorList.forEach(color => {
+      if (newProduct.isTailleUnique) {
+        stockObject[color] = {
+          'Taille Unique': parseInt(newProduct.defaultStock) || 0
+        };
+      } else {
+        stockObject[color] = {
+          XS: parseInt(newProduct.defaultStock) || 0,
+          S: parseInt(newProduct.defaultStock) || 0,
+          M: parseInt(newProduct.defaultStock) || 0,
+          L: parseInt(newProduct.defaultStock) || 0,
+          XXL: parseInt(newProduct.defaultStock) || 0,
+          '34': parseInt(newProduct.defaultStock) || 0,
+          '36': parseInt(newProduct.defaultStock) || 0,
+          '38': parseInt(newProduct.defaultStock) || 0,
+          '40': parseInt(newProduct.defaultStock) || 0,
+          '42': parseInt(newProduct.defaultStock) || 0,
+          '44': parseInt(newProduct.defaultStock) || 0,
+          '46': parseInt(newProduct.defaultStock) || 0,
+          '48': parseInt(newProduct.defaultStock) || 0,
+        };
+      }
+    });
 
     const { error } = await supabase.from('products').insert([
       {
@@ -114,14 +114,11 @@ export default function AdminPage() {
     if (error) {
       alert('Erreur lors de l\'ajout : ' + error.message);
     } else {
-      alert('Produit ajouté avec succès !');
+      alert('Produit ajouté avec succès ! Tu pourras affiner les stocks précis par taille dans Supabase si besoin.');
       setNewProduct({ 
-        title: '', slug: '', price: '', 
-        stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXXL: '0', 
-        stock34: '0', stock36: '0', stock38: '5', stock40: '5', stock42: '2', stock44: '0', stock46: '0', stock48: '0', stockTU: '10',
-        category: 'Vestes', description: '' 
+        title: '', slug: '', price: '', colors: 'Unique', isTailleUnique: false, 
+        category: 'Vestes', description: '', defaultStock: '5' 
       });
-      setIsTailleUnique(false);
       fetchData();
     }
   };
@@ -180,97 +177,44 @@ export default function AdminPage() {
                 <option value="Accessoires">Accessoires</option>
               </select>
 
-              {/* GESTION DU STOCK (OPTION TAILLE UNIQUE OU STANDARD) */}
+              {/* GESTION DES COULEURS ET DU STOCK */}
               <div className="md:col-span-2 border p-4 rounded bg-gray-50 space-y-4">
-                <div className="flex items-center gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Couleurs disponibles (séparées par des virgules)</label>
+                  <input 
+                    type="text" 
+                    value={newProduct.colors} 
+                    onChange={e => setNewProduct({...newProduct, colors: e.target.value})} 
+                    placeholder="ex: Orange, Bleu, Écru" 
+                    className="border p-2 rounded w-full bg-white" 
+                    required 
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Pour une seule couleur sans choix particulier, écris simplement "Unique" ou la couleur (ex: "Ecru").</p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
                   <input 
                     type="checkbox" 
-                    id="tuCheck" 
-                    checked={isTailleUnique} 
-                    onChange={e => setIsTailleUnique(e.target.checked)} 
+                    id="tuCheckAdmin" 
+                    checked={newProduct.isTailleUnique} 
+                    onChange={e => setNewProduct({...newProduct, isTailleUnique: e.target.checked})} 
                     className="w-4 h-4 cursor-pointer"
                   />
-                  <label htmlFor="tuCheck" className="font-semibold text-gray-700 cursor-pointer text-xs">
-                    Ce produit est en <strong className="text-anthracite">Taille Unique</strong> (ex: accessoires, écharpes, pièces uniques)
+                  <label htmlFor="tuCheckAdmin" className="font-semibold text-gray-700 cursor-pointer text-xs">
+                    Ce produit est en <strong className="text-anthracite">Taille Unique</strong> pour ces couleurs
                   </label>
                 </div>
 
-                {isTailleUnique ? (
-                  <div>
-                    <label className="block text-[10px] text-gray-500 mb-1">Stock disponible pour la Taille Unique</label>
-                    <input 
-                      type="number" 
-                      value={newProduct.stockTU} 
-                      onChange={e => setNewProduct({...newProduct, stockTU: e.target.value})} 
-                      className="border p-2 rounded w-full md:w-1/3 bg-white" 
-                      required 
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-3 pt-2 border-t border-gray-200">
-                    <span className="block font-semibold text-gray-700 mb-1">Stocks par taille standard :</span>
-                    
-                    {/* Ligne 1 : Tailles Lettres */}
-                    <div className="grid grid-cols-5 gap-2">
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">XS</label>
-                        <input type="number" value={newProduct.stockXS} onChange={e => setNewProduct({...newProduct, stockXS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">S</label>
-                        <input type="number" value={newProduct.stockS} onChange={e => setNewProduct({...newProduct, stockS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">M</label>
-                        <input type="number" value={newProduct.stockM} onChange={e => setNewProduct({...newProduct, stockM: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">L</label>
-                        <input type="number" value={newProduct.stockL} onChange={e => setNewProduct({...newProduct, stockL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">XXL</label>
-                        <input type="number" value={newProduct.stockXXL} onChange={e => setNewProduct({...newProduct, stockXXL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                    </div>
-
-                    {/* Ligne 2 : Tailles Françaises du 34 au 48 */}
-                    <div className="grid grid-cols-4 md:grid-cols-8 gap-2 pt-2 border-t border-gray-200">
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">34</label>
-                        <input type="number" value={newProduct.stock34} onChange={e => setNewProduct({...newProduct, stock34: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">36</label>
-                        <input type="number" value={newProduct.stock36} onChange={e => setNewProduct({...newProduct, stock36: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">38</label>
-                        <input type="number" value={newProduct.stock38} onChange={e => setNewProduct({...newProduct, stock38: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">40</label>
-                        <input type="number" value={newProduct.stock40} onChange={e => setNewProduct({...newProduct, stock40: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">42</label>
-                        <input type="number" value={newProduct.stock42} onChange={e => setNewProduct({...newProduct, stock42: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">44</label>
-                        <input type="number" value={newProduct.stock44} onChange={e => setNewProduct({...newProduct, stock44: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">46</label>
-                        <input type="number" value={newProduct.stock46} onChange={e => setNewProduct({...newProduct, stock46: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">48</label>
-                        <input type="number" value={newProduct.stock48} onChange={e => setNewProduct({...newProduct, stock48: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-[10px] text-gray-500 mb-1">Stock initial par défaut pour chaque taille/couleur</label>
+                  <input 
+                    type="number" 
+                    value={newProduct.defaultStock} 
+                    onChange={e => setNewProduct({...newProduct, defaultStock: e.target.value})} 
+                    className="border p-2 rounded w-full md:w-1/3 bg-white" 
+                    required 
+                  />
+                </div>
               </div>
 
               <textarea 
@@ -291,10 +235,7 @@ export default function AdminPage() {
               {products.map(prod => (
                 <div key={prod.id} className="flex justify-between items-center text-xs border-b pb-2">
                   <span>
-                    {prod.title} — <strong className="text-anthracite">{prod.price} €</strong>{' '}
-                    (Stock : {typeof prod.stock === 'object' && prod.stock !== null 
-                      ? Object.entries(prod.stock).map(([size, qty]) => `${size}: ${qty}`).join(', ') 
-                      : prod.stock})
+                    {prod.title} — <strong className="text-anthracite">{prod.price} €</strong>
                   </span>
                   <button onClick={() => handleDeleteProduct(prod.id)} className="text-red-500 hover:underline uppercase text-[10px]">Supprimer</button>
                 </div>
