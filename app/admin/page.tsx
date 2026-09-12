@@ -14,7 +14,7 @@ export default function AdminPage() {
     title: '',
     slug: '',
     price: '',
-    colors: 'Unique', // Ex: "Orange, Bleu" ou "Unique"
+    colors: 'Unique',
     stockXS: '0',
     stockS: '5',
     stockM: '5',
@@ -83,7 +83,7 @@ export default function AdminPage() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const colorList = newProduct.colors.split(',').map(c => c.trim()).filter(Boolean);
+    const colorList = newProduct.colors.split(',').map((c: string) => c.trim()).filter(Boolean);
 
     const sizeObject = isTailleUnique ? {
       'Taille Unique': parseInt(newProduct.stockTU) || 0
@@ -103,13 +103,12 @@ export default function AdminPage() {
       '48': parseInt(newProduct.stock48) || 0,
     };
 
-    let stockObject;
+    let stockObject: Record<string, any> = {};
     if (colorList.length <= 1 || colorList[0].toLowerCase() === 'unique') {
-      stockObject = sizeObject; // Format standard plat (compatible avec tes produits actuels)
+      stockObject = sizeObject;
     } else {
-      stockObject = {};
-      colorList.forEach(color => {
-        stockObject[color] = sizeObject; // Format multi-couleurs
+      colorList.forEach((color: string) => {
+        stockObject[color] = sizeObject;
       });
     }
 
