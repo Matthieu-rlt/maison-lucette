@@ -124,7 +124,7 @@ export default function ContactPage() {
             </div>
             <div>
               <span className="block font-semibold uppercase tracking-widest text-anthracite mb-1 text-[10px]">📞 Téléphone</span>
-              <a href="tel:+33981700000" className="hover:underline text-gray-800 font-medium">02 51 75 74 73</a>
+              <a href="tel:+33981700000" className="hover:underline text-gray-800 font-medium">02 40 19 22 57</a>
             </div>
             <div>
               <span className="block font-semibold uppercase tracking-widest text-anthracite mb-1 text-[10px]">✉️ E-mail</span>
