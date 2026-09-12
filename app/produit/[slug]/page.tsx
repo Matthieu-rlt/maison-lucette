@@ -13,7 +13,7 @@ export default function ProductPage() {
   
   const [colors, setColors] = useState<string[]>([]);
   const [selectedColor, setSelectedColor] = useState<string>('');
-  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('38');
   
   const [cartOpen, setCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
@@ -23,6 +23,8 @@ export default function ProductPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const SUPABASE_STORAGE_URL = "https://lujfahankslcpcywiugh.supabase.co/storage/v1/object/public/products";
+
+  const knownSizes = ['XS', 'S', 'M', 'L', 'XXL', '34', '36', '38', '40', '42', '44', '46', '48', 'Taille Unique'];
 
   useEffect(() => {
     async function fetchProduct() {
@@ -40,16 +42,21 @@ export default function ProductPage() {
           try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
         }
 
-        const availableColors = Object.keys(stockObj || {});
-        if (availableColors.length > 0) {
-          setColors(availableColors);
-          setSelectedColor(availableColors[0]);
-          
-          // Sélectionner la première taille dispo pour cette première couleur
-          const firstColorStock = stockObj[availableColors[0]];
-          if (firstColorStock && typeof firstColorStock === 'object') {
-            const firstSize = Object.keys(firstColorStock).find(s => firstColorStock[s] > 0) || Object.keys(firstColorStock)[0];
-            setSelectedSize(firstSize);
+        const keys = Object.keys(stockObj || {});
+        // Vérifie si le stock est plat (anciens produits) ou imbriqué (multi-couleurs)
+        const isFlat = keys.length > 0 && knownSizes.includes(keys[0]);
+
+        if (isFlat) {
+          setColors([]);
+          const firstAvailable = Object.keys(stockObj).find(s => stockObj[s] > 0) || Object.keys(stockObj)[0];
+          if (firstAvailable) setSelectedSize(firstAvailable);
+        } else {
+          setColors(keys);
+          if (keys.length > 0) {
+            setSelectedColor(keys[0]);
+            const colorStock = stockObj[keys[0]] || {};
+            const firstAvailable = Object.keys(colorStock).find(s => colorStock[s] > 0) || Object.keys(colorStock)[0];
+            if (firstAvailable) setSelectedSize(firstAvailable);
           }
         }
 
@@ -68,29 +75,29 @@ export default function ProductPage() {
     setCartItems(savedCart);
   }, [slug]);
 
-  // Chargement dynamique des images en fonction de la couleur sélectionnée
+  // Chargement dynamique des images (avec gestion couleur si applicable)
   useEffect(() => {
-    if (!product || !selectedColor) return;
+    if (!product) return;
 
-    async function loadImagesForColor() {
-      const colorSlug = selectedColor.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    async function loadImages() {
       const validImages: string[] = [];
+      const colorSlug = selectedColor && selectedColor !== 'Unique' ? selectedColor.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
 
-      // Vérifie les images avec la couleur (ex: slug-orange-1.jpg)
-      for (let i = 1; i <= 8; i++) {
-        const url = `${SUPABASE_STORAGE_URL}/${product.slug}-${colorSlug}-${i}.jpg`;
-        const exists = await new Promise<boolean>((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve(true);
-          img.onerror = () => resolve(false);
-          img.src = url;
-        });
-        if (exists) {
-          validImages.push(url);
+      // 1. Essaye de charger avec la couleur si elle existe
+      if (colorSlug) {
+        for (let i = 1; i <= 8; i++) {
+          const url = `${SUPABASE_STORAGE_URL}/${product.slug}-${colorSlug}-${i}.jpg`;
+          const exists = await new Promise<boolean>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+          });
+          if (exists) validImages.push(url);
         }
       }
 
-      // Si aucune image spécifique à la couleur, fallback sur les images standard du produit
+      // 2. Fallback sur les images standard du produit
       if (validImages.length === 0) {
         for (let i = 1; i <= 8; i++) {
           const url = `${SUPABASE_STORAGE_URL}/${product.slug}-${i}.jpg`;
@@ -100,9 +107,7 @@ export default function ProductPage() {
             img.onerror = () => resolve(false);
             img.src = url;
           });
-          if (exists) {
-            validImages.push(url);
-          }
+          if (exists) validImages.push(url);
         }
       }
 
@@ -114,12 +119,11 @@ export default function ProductPage() {
       setCurrentImageIndex(0);
     }
 
-    loadImagesForColor();
+    loadImages();
   }, [selectedColor, product]);
 
   const handleColorChange = (color: string) => {
     setSelectedColor(color);
-    // Mettre à jour la première taille disponible pour cette nouvelle couleur
     let stockObj = product.stock;
     if (typeof stockObj === 'string') {
       try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
@@ -177,9 +181,12 @@ export default function ProductPage() {
       try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
     }
 
-    const currentStock = stockObj[selectedColor]?.[selectedSize] ?? 0;
+    const keys = Object.keys(stockObj || {});
+    const isFlat = keys.length > 0 && knownSizes.includes(keys[0]);
+    const currentStock = isFlat ? (stockObj[selectedSize] ?? 0) : (stockObj[selectedColor]?.[selectedSize] ?? 0);
+
     if (currentStock <= 0) {
-      alert("Cette combinaison couleur/taille est actuellement épuisée.");
+      alert("Cette taille est actuellement épuisée.");
       return;
     }
 
@@ -234,12 +241,14 @@ export default function ProductPage() {
     return <div className="max-w-7xl mx-auto px-4 py-32 text-center text-gray-500">Produit introuvable.</div>;
   }
 
-  let productStock = product.stock;
-  if (typeof productStock === 'string') {
-    try { productStock = JSON.parse(productStock); } catch (e) { productStock = {}; }
+  let stockObj = product.stock;
+  if (typeof stockObj === 'string') {
+    try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
   }
 
-  const currentSizes = productStock[selectedColor] || {};
+  const keys = Object.keys(stockObj || {});
+  const isFlat = keys.length > 0 && knownSizes.includes(keys[0]);
+  const currentSizes = isFlat ? stockObj : (stockObj[selectedColor] || {});
   const isTailleUniqueProduct = currentSizes['Taille Unique'] !== undefined;
 
   return (
@@ -315,8 +324,8 @@ export default function ProductPage() {
 
           <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
 
-          {/* SÉLECTION DES COULEURS */}
-          {colors.length > 1 && (
+          {/* SÉLECTION DES COULEURS (SI MULTI-COULEURS) */}
+          {!isFlat && colors.length > 1 && (
             <div className="space-y-2">
               <span className="text-xs uppercase tracking-wider text-anthracite font-semibold block">
                 Couleur : <span className="font-normal text-gray-600">{selectedColor}</span>
@@ -340,7 +349,7 @@ export default function ProductPage() {
             </div>
           )}
 
-          {/* SÉLECTION DES TAILLES POUR LA COULEUR CHOISIE */}
+          {/* SÉLECTION DES TAILLES SUR DEUX LIGNES */}
           <div className="space-y-4">
             <span className="text-xs uppercase tracking-wider text-anthracite font-semibold block">Taille & Stock</span>
             
