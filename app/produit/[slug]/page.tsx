@@ -43,19 +43,18 @@ export default function ProductPage() {
         }
 
         const keys = Object.keys(stockObj || {});
-        // Vérifie si le stock est plat (anciens produits) ou imbriqué (multi-couleurs)
         const isFlat = keys.length > 0 && knownSizes.includes(keys[0]);
 
         if (isFlat) {
           setColors([]);
-          const firstAvailable = Object.keys(stockObj).find(s => stockObj[s] > 0) || Object.keys(stockObj)[0];
+          const firstAvailable = Object.keys(stockObj).find(s => Number(stockObj[s]) > 0) || Object.keys(stockObj)[0];
           if (firstAvailable) setSelectedSize(firstAvailable);
         } else {
           setColors(keys);
           if (keys.length > 0) {
             setSelectedColor(keys[0]);
             const colorStock = stockObj[keys[0]] || {};
-            const firstAvailable = Object.keys(colorStock).find(s => colorStock[s] > 0) || Object.keys(colorStock)[0];
+            const firstAvailable = Object.keys(colorStock).find(s => Number(colorStock[s]) > 0) || Object.keys(colorStock)[0];
             if (firstAvailable) setSelectedSize(firstAvailable);
           }
         }
@@ -75,7 +74,6 @@ export default function ProductPage() {
     setCartItems(savedCart);
   }, [slug]);
 
-  // Chargement dynamique des images (avec gestion couleur si applicable)
   useEffect(() => {
     if (!product) return;
 
@@ -83,7 +81,6 @@ export default function ProductPage() {
       const validImages: string[] = [];
       const colorSlug = selectedColor && selectedColor !== 'Unique' ? selectedColor.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
 
-      // 1. Essaye de charger avec la couleur si elle existe
       if (colorSlug) {
         for (let i = 1; i <= 8; i++) {
           const url = `${SUPABASE_STORAGE_URL}/${product.slug}-${colorSlug}-${i}.jpg`;
@@ -97,7 +94,6 @@ export default function ProductPage() {
         }
       }
 
-      // 2. Fallback sur les images standard du produit
       if (validImages.length === 0) {
         for (let i = 1; i <= 8; i++) {
           const url = `${SUPABASE_STORAGE_URL}/${product.slug}-${i}.jpg`;
@@ -129,7 +125,7 @@ export default function ProductPage() {
       try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
     }
     const colorStock = stockObj[color] || {};
-    const firstAvailableSize = Object.keys(colorStock).find(s => colorStock[s] > 0) || Object.keys(colorStock)[0];
+    const firstAvailableSize = Object.keys(colorStock).find(s => Number(colorStock[s]) > 0) || Object.keys(colorStock)[0];
     if (firstAvailableSize) setSelectedSize(firstAvailableSize);
   };
 
@@ -183,7 +179,7 @@ export default function ProductPage() {
 
     const keys = Object.keys(stockObj || {});
     const isFlat = keys.length > 0 && knownSizes.includes(keys[0]);
-    const currentStock = isFlat ? (stockObj[selectedSize] ?? 0) : (stockObj[selectedColor]?.[selectedSize] ?? 0);
+    const currentStock = isFlat ? Number(stockObj[selectedSize] ?? 0) : Number(stockObj[selectedColor]?.[selectedSize] ?? 0);
 
     if (currentStock <= 0) {
       alert("Cette taille est actuellement épuisée.");
@@ -386,7 +382,6 @@ export default function ProductPage() {
                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles standard :</span>
                   <div className="flex flex-wrap gap-2">
                     {['XS', 'S', 'M', 'L', 'XXL'].map((size) => {
-                      if (currentSizes[size] === undefined) return null;
                       const stockValue = Number(currentSizes[size] || 0);
                       const isOutOfStock = stockValue <= 0;
                       return (
@@ -418,7 +413,6 @@ export default function ProductPage() {
                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">Tailles françaises :</span>
                   <div className="flex flex-wrap gap-2">
                     {['34', '36', '38', '40', '42', '44', '46', '48'].map((size) => {
-                      if (currentSizes[size] === undefined) return null;
                       const stockValue = Number(currentSizes[size] || 0);
                       const isOutOfStock = stockValue <= 0;
                       return (
