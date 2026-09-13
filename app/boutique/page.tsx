@@ -9,7 +9,7 @@ interface Product {
   category: string;
   price: number;
   description?: string;
-  stock: { XS: number; S: number; M: number; L: number; XL: number };
+  stock: any;
 }
 
 interface ProductCardProps {
@@ -127,7 +127,11 @@ function ProductCard({ product }: ProductCardProps) {
 export default function BoutiquePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('Tous');
+
   const SUPABASE_STORAGE_URL = "https://lujfahankslcpcywiugh.supabase.co/storage/v1/object/public/products";
+
+  const categories = ['Tous', 'Vestes', 'Manteaux', 'Maille', 'Accessoires', 'Chemises', 'Tops', 'Hauts', 'Blouses'];
 
   useEffect(() => {
     async function fetchProducts() {
@@ -142,37 +146,64 @@ export default function BoutiquePage() {
     fetchProducts();
   }, []);
 
+  const filteredProducts = selectedCategory === 'Tous' 
+    ? products 
+    : products.filter(p => p.category?.toLowerCase() === selectedCategory.toLowerCase());
+
   if (loading) {
     return <div className="max-w-7xl mx-auto px-4 py-32 text-center font-sans text-gray-500">Chargement de la collection...</div>;
   }
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 font-sans">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-gray-200 pb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-gray-200 pb-6">
         <div>
           <span className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Maison Lucette - La Baule</span>
           <h1 className="text-3xl md:text-4xl font-serif text-anthracite">La Collection</h1>
         </div>
         <p className="text-xs uppercase tracking-widest text-gray-500 mt-4 md:mt-0">
-          {products.length} pièces disponibles
+          {filteredProducts.length} pièces disponibles
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-        {products.map((product) => (
-          <ProductCard 
-            key={product.slug} 
-            product={{
-              slug: product.slug,
-              title: product.title,
-              price: product.price,
-              category: product.category,
-              image1: `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
-              image2: `${SUPABASE_STORAGE_URL}/${product.slug}-2.jpg`,
-            }} 
-          />
+      {/* BARRE DE FILTRES DÉFILANTE HORIZONTALE */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-12 scrollbar-none">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`px-5 py-2.5 text-xs uppercase tracking-widest whitespace-nowrap transition-colors rounded ${
+              selectedCategory === cat 
+                ? 'bg-anthracite text-white font-semibold' 
+                : 'bg-white text-anthracite border border-gray-200 hover:border-anthracite'
+            }`}
+          >
+            {cat}
+          </button>
         ))}
       </div>
+
+      {filteredProducts.length === 0 ? (
+        <div className="text-center py-20 text-gray-400 text-xs uppercase tracking-widest">
+          Aucune pièce disponible dans cette catégorie pour le moment.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+          {filteredProducts.map((product) => (
+            <ProductCard 
+              key={product.slug} 
+              product={{
+                slug: product.slug,
+                title: product.title,
+                price: product.price,
+                category: product.category,
+                image1: `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
+                image2: `${SUPABASE_STORAGE_URL}/${product.slug}-2.jpg`,
+              }} 
+            />
+          ))}
+        </div>
+      )}
     </main>
   );
 }
