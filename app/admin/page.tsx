@@ -303,39 +303,54 @@ export default function AdminPage() {
             </div>
 
             <form onSubmit={handleSaveProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <input 
-                type="text" placeholder="Nom de la pièce (ex: Veste Écru)" value={newProduct.title}
-                onChange={e => setNewProduct({...newProduct, title: e.target.value})} required
-                className="border p-3 rounded"
-              />
-              <input 
-                type="text" placeholder="Slug (ex: veste-ecru)" value={newProduct.slug}
-                onChange={e => setNewProduct({...newProduct, slug: e.target.value})}
-                className="border p-3 rounded"
-              />
-              <input 
-                type="number" step="0.01" placeholder="Prix en € (ex: 190.00)" value={newProduct.price}
-                onChange={e => setNewProduct({...newProduct, price: e.target.value})} required
-                className="border p-3 rounded"
-              />
-              <input 
-                type="number" placeholder="Réduction en % (ex: 20 pour -20%)" value={newProduct.discount}
-                onChange={e => setNewProduct({...newProduct, discount: e.target.value})}
-                className="border p-3 rounded"
-              />
-              <select 
-                value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}
-                className="border p-3 rounded bg-white md:col-span-2"
-              >
-                <option value="Vestes">Vestes</option>
-                <option value="Manteaux">Manteaux</option>
-                <option value="Maille">Maille</option>
-                <option value="Accessoires">Accessoires</option>
-                <option value="Chemises">Chemises</option>
-                <option value="Tops">Tops</option>
-                <option value="Hauts">Hauts</option>
-                <option value="Blouses">Blouses</option>
-              </select>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Nom de la pièce</label>
+                <input 
+                  type="text" placeholder="ex: Veste Écru" value={newProduct.title}
+                  onChange={e => setNewProduct({...newProduct, title: e.target.value})} required
+                  className="border p-3 rounded w-full bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Slug URL</label>
+                <input 
+                  type="text" placeholder="ex: veste-ecru" value={newProduct.slug}
+                  onChange={e => setNewProduct({...newProduct, slug: e.target.value})}
+                  className="border p-3 rounded w-full bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Prix en €</label>
+                <input 
+                  type="number" step="0.01" placeholder="ex: 190.00" value={newProduct.price}
+                  onChange={e => setNewProduct({...newProduct, price: e.target.value})} required
+                  className="border p-3 rounded w-full bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-red-600 mb-1">Réduction en % (ex: 20 pour -20%)</label>
+                <input 
+                  type="number" placeholder="ex: 20" value={newProduct.discount}
+                  onChange={e => setNewProduct({...newProduct, discount: e.target.value})}
+                  className="border p-3 rounded w-full bg-white border-red-200"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Catégorie</label>
+                <select 
+                  value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}
+                  className="border p-3 rounded bg-white w-full"
+                >
+                  <option value="Vestes">Vestes</option>
+                  <option value="Manteaux">Manteaux</option>
+                  <option value="Maille">Maille</option>
+                  <option value="Accessoires">Accessoires</option>
+                  <option value="Chemises">Chemises</option>
+                  <option value="Tops">Tops</option>
+                  <option value="Hauts">Hauts</option>
+                  <option value="Blouses">Blouses</option>
+                </select>
+              </div>
 
               {/* COULEURS ET GESTION DES STOCKS DYNAMIQUE */}
               <div className="md:col-span-2 border p-4 rounded bg-gray-50 space-y-4">
@@ -512,11 +527,15 @@ export default function AdminPage() {
                 })()}
               </div>
 
-              <textarea 
-                placeholder="Description de la pièce..." value={newProduct.description}
-                onChange={e => setNewProduct({...newProduct, description: e.target.value})}
-                className="border p-3 rounded md:col-span-2" rows={3}
-              />
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Description de la pièce</label>
+                <textarea 
+                  placeholder="Description..." value={newProduct.description}
+                  onChange={e => setNewProduct({...newProduct, description: e.target.value})}
+                  className="border p-3 rounded w-full bg-white" rows={3}
+                />
+              </div>
+
               <button type="submit" className="md:col-span-2 bg-anthracite text-white py-3 uppercase tracking-widest rounded hover:bg-opacity-90">
                 {editingProductId ? 'Mettre à jour la pièce' : 'Enregistrer la pièce'}
               </button>
@@ -541,7 +560,7 @@ export default function AdminPage() {
             </div>
           </section>
 
-          {/* SECTION 3 : MESSAGES DE CONTACT */}
+          {/* MESSAGES DE CONTACT */}
           <section className="bg-white p-8 rounded border border-gray-100 shadow-sm space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-anthracite">Messages reçus ({messages.length})</h2>
             {messages.length === 0 ? (
