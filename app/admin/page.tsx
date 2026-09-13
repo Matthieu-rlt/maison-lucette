@@ -9,6 +9,7 @@ export default function AdminPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [isTailleUnique, setIsTailleUnique] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   
   const [newProduct, setNewProduct] = useState({
     title: '',
@@ -81,7 +82,67 @@ export default function AdminPage() {
     if (prodData) setProducts(prodData);
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
+  const handleStartEdit = (prod: any) => {
+    setEditingProductId(prod.id);
+    let stockObj = prod.stock;
+    if (typeof stockObj === 'string') {
+      try { stockObj = JSON.parse(stockObj); } catch (e) { stockObj = {}; }
+    }
+
+    const keys = Object.keys(stockObj || {});
+    const knownSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '34', '36', '38', '40', '42', '44', '46', '48', 'Taille Unique'];
+    const isFlat = keys.length > 0 && knownSizes.includes(keys[0]);
+
+    let colorsStr = 'Unique';
+    let activeStock = stockObj;
+
+    if (!isFlat && keys.length > 0) {
+      colorsStr = keys.join(', ');
+      activeStock = stockObj[keys[0]] || {};
+    }
+
+    const isTU = activeStock['Taille Unique'] !== undefined;
+    setIsTailleUnique(isTU);
+
+    setNewProduct({
+      title: prod.title || '',
+      slug: prod.slug || '',
+      price: prod.price?.toString() || '',
+      colors: colorsStr,
+      stockXS: activeStock['XS']?.toString() || '0',
+      stockS: activeStock['S']?.toString() || '0',
+      stockM: activeStock['M']?.toString() || '0',
+      stockL: activeStock['L']?.toString() || '0',
+      stockXL: activeStock['XL']?.toString() || '0',
+      stockXXL: activeStock['XXL']?.toString() || '0',
+      stock34: activeStock['34']?.toString() || '0',
+      stock36: activeStock['36']?.toString() || '0',
+      stock38: activeStock['38']?.toString() || '0',
+      stock40: activeStock['40']?.toString() || '0',
+      stock42: activeStock['42']?.toString() || '0',
+      stock44: activeStock['44']?.toString() || '0',
+      stock46: activeStock['46']?.toString() || '0',
+      stock48: activeStock['48']?.toString() || '0',
+      stockTU: activeStock['Taille Unique']?.toString() || '10',
+      category: prod.category || 'Vestes',
+      description: prod.description || '',
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProductId(null);
+    setNewProduct({
+      title: '', slug: '', price: '', colors: 'Unique',
+      stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXL: '0', stockXXL: '0', 
+      stock34: '0', stock36: '0', stock38: '5', stock40: '5', stock42: '2', stock44: '0', stock46: '0', stock48: '0', stockTU: '10',
+      category: 'Vestes', description: ''
+    });
+    setIsTailleUnique(false);
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const colorList = newProduct.colors.split(',').map((c: string) => c.trim()).filter(Boolean);
@@ -114,28 +175,29 @@ export default function AdminPage() {
       });
     }
 
-    const { error } = await supabase.from('products').insert([
-      {
-        title: newProduct.title,
-        slug: newProduct.slug || newProduct.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        price: parseFloat(newProduct.price),
-        stock: stockObject,
-        category: newProduct.category,
-        description: newProduct.description,
-      }
-    ]);
+    const productData = {
+      title: newProduct.title,
+      slug: newProduct.slug || newProduct.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      price: parseFloat(newProduct.price),
+      stock: stockObject,
+      category: newProduct.category,
+      description: newProduct.description,
+    };
+
+    let error;
+    if (editingProductId) {
+      const res = await supabase.from('products').update(productData).eq('id', editingProductId);
+      error = res.error;
+    } else {
+      const res = await supabase.from('products').insert([productData]);
+      error = res.error;
+    }
 
     if (error) {
-      alert('Erreur lors de l\'ajout : ' + error.message);
+      alert('Erreur : ' + error.message);
     } else {
-      alert('Produit ajouté avec succès !');
-      setNewProduct({ 
-        title: '', slug: '', price: '', colors: 'Unique',
-        stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXL: '0', stockXXL: '0', 
-        stock34: '0', stock36: '0', stock38: '5', stock40: '5', stock42: '2', stock44: '0', stock46: '0', stock48: '0', stockTU: '10',
-        category: 'Vestes', description: '' 
-      });
-      setIsTailleUnique(false);
+      alert(editingProductId ? 'Pièce modifiée avec succès !' : 'Pièce ajoutée avec succès !');
+      handleCancelEdit();
       fetchData();
     }
   };
@@ -165,10 +227,24 @@ export default function AdminPage() {
         </div>
       ) : (
         <div className="space-y-12">
-          {/* SECTION 1 : AJOUTER UN PRODUIT */}
+          {/* SECTION 1 : AJOUTER / MODIFIER UN PRODUIT */}
           <section className="bg-white p-8 rounded border border-gray-100 shadow-sm space-y-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-anthracite">Ajouter une nouvelle pièce</h2>
-            <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-anthracite">
+                {editingProductId ? `Modifier la pièce : ${newProduct.title}` : 'Ajouter une nouvelle pièce'}
+              </h2>
+              {editingProductId && (
+                <button 
+                  type="button" 
+                  onClick={handleCancelEdit} 
+                  className="text-xs text-gray-500 hover:text-anthracite underline uppercase"
+                >
+                  Annuler la modification
+                </button>
+              )}
+            </div>
+
+            <form onSubmit={handleSaveProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <input 
                 type="text" placeholder="Nom de la pièce (ex: Veste Écru)" value={newProduct.title}
                 onChange={e => setNewProduct({...newProduct, title: e.target.value})} required
@@ -310,7 +386,7 @@ export default function AdminPage() {
                 className="border p-3 rounded md:col-span-2" rows={3}
               />
               <button type="submit" className="md:col-span-2 bg-anthracite text-white py-3 uppercase tracking-widest rounded hover:bg-opacity-90">
-                Enregistrer la pièce
+                {editingProductId ? 'Mettre à jour la pièce' : 'Enregistrer la pièce'}
               </button>
             </form>
           </section>
@@ -324,7 +400,10 @@ export default function AdminPage() {
                   <span>
                     {prod.title} — <strong className="text-anthracite">{prod.price} €</strong>
                   </span>
-                  <button onClick={() => handleDeleteProduct(prod.id)} className="text-red-500 hover:underline uppercase text-[10px]">Supprimer</button>
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => handleStartEdit(prod)} className="text-blue-600 hover:underline uppercase text-[10px] font-semibold">Modifier</button>
+                    <button onClick={() => handleDeleteProduct(prod.id)} className="text-red-500 hover:underline uppercase text-[10px]">Supprimer</button>
+                  </div>
                 </div>
               ))}
             </div>
