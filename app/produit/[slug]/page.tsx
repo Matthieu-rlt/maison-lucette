@@ -147,10 +147,12 @@ export default function ProductPage() {
       const favs = JSON.parse(localStorage.getItem('maison_lucette_favorites') || '[]');
       let updatedFavs;
       
+      const finalPrice = product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+
       const productObj = {
         slug: product.slug,
         title: product.title,
-        price: product.price,
+        price: finalPrice,
         category: product.category,
         image1: `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
       };
@@ -186,13 +188,15 @@ export default function ProductPage() {
       return;
     }
 
+    const finalPrice = product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+
     const itemLabel = selectedColor && selectedColor !== 'Unique' 
       ? `${product.title} (Couleur : ${selectedColor} / Taille : ${selectedSize})`
       : `${product.title} (Taille : ${selectedSize})`;
 
     const newItem = {
       name: itemLabel,
-      price: product.price,
+      price: finalPrice,
       image: images[0] || `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
       quantity: 1,
       color: selectedColor,
@@ -246,6 +250,9 @@ export default function ProductPage() {
   const isFlat = keys.length > 0 && knownSizes.includes(keys[0]);
   const currentSizes = isFlat ? stockObj : (stockObj[selectedColor] || {});
   const isTailleUniqueProduct = currentSizes['Taille Unique'] !== undefined;
+
+  const hasDiscount = product.discount && product.discount > 0;
+  const finalPrice = hasDiscount ? product.price * (1 - product.discount / 100) : product.price;
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 font-sans">
@@ -315,7 +322,20 @@ export default function ProductPage() {
           <div>
             <span className="text-xs uppercase tracking-widest text-gray-400">{product.category}</span>
             <h1 className="text-3xl font-serif text-anthracite mt-1">{product.title}</h1>
-            <p className="text-xl font-semibold text-anthracite mt-4">{Number(product.price).toFixed(2)} €</p>
+            
+            <div className="flex items-center gap-3 mt-4">
+              {hasDiscount ? (
+                <>
+                  <span className="text-xl font-semibold text-red-600">{finalPrice.toFixed(2)} €</span>
+                  <span className="text-base text-gray-400 line-through">{Number(product.price).toFixed(2)} €</span>
+                  <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                    -{product.discount}% de remise
+                  </span>
+                </>
+              ) : (
+                <span className="text-xl font-semibold text-anthracite">{Number(product.price).toFixed(2)} €</span>
+              )}
+            </div>
           </div>
 
           <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
