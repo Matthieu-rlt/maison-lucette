@@ -25,6 +25,7 @@ export default function AdminPage() {
     title: '',
     slug: '',
     price: '',
+    discount: '0',
     category: 'Vestes',
     description: '',
   });
@@ -115,6 +116,7 @@ export default function AdminPage() {
       title: prod.title || '',
       slug: prod.slug || '',
       price: prod.price?.toString() || '',
+      discount: prod.discount?.toString() || '0',
       category: prod.category || 'Vestes',
       description: prod.description || '',
     });
@@ -185,7 +187,7 @@ export default function AdminPage() {
     });
     setColorStocks({});
     setNewProduct({
-      title: '', slug: '', price: '', category: 'Vestes', description: ''
+      title: '', slug: '', price: '', discount: '0', category: 'Vestes', description: ''
     });
   };
 
@@ -227,6 +229,7 @@ export default function AdminPage() {
       title: newProduct.title,
       slug: newProduct.slug || newProduct.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       price: parseFloat(newProduct.price),
+      discount: parseInt(newProduct.discount) || 0,
       stock: stockObject,
       category: newProduct.category,
       description: newProduct.description,
@@ -311,13 +314,18 @@ export default function AdminPage() {
                 className="border p-3 rounded"
               />
               <input 
-                type="number" step="0.01" placeholder="Prix en € (ex: 145.00)" value={newProduct.price}
+                type="number" step="0.01" placeholder="Prix en € (ex: 190.00)" value={newProduct.price}
                 onChange={e => setNewProduct({...newProduct, price: e.target.value})} required
+                className="border p-3 rounded"
+              />
+              <input 
+                type="number" placeholder="Réduction en % (ex: 20 pour -20%)" value={newProduct.discount}
+                onChange={e => setNewProduct({...newProduct, discount: e.target.value})}
                 className="border p-3 rounded"
               />
               <select 
                 value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}
-                className="border p-3 rounded bg-white"
+                className="border p-3 rounded bg-white md:col-span-2"
               >
                 <option value="Vestes">Vestes</option>
                 <option value="Manteaux">Manteaux</option>
@@ -522,7 +530,7 @@ export default function AdminPage() {
               {products.map(prod => (
                 <div key={prod.id} className="flex justify-between items-center text-xs border-b pb-2">
                   <span>
-                    {prod.title} — <strong className="text-anthracite">{prod.price} €</strong>
+                    {prod.title} — <strong className="text-anthracite">{prod.price} €</strong> {prod.discount > 0 && <span className="text-red-500 font-bold">(-{prod.discount}%)</span>}
                   </span>
                   <div className="flex items-center gap-4">
                     <button onClick={() => handleStartEdit(prod)} className="text-blue-600 hover:underline uppercase text-[10px] font-semibold">Modifier</button>
