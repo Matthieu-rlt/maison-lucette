@@ -8,29 +8,23 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  
+  const [colorsInput, setColorsInput] = useState('Unique');
   const [isTailleUnique, setIsTailleUnique] = useState(false);
+  
+  const [stockValues, setStockValues] = useState({
+    XS: '0', S: '5', M: '5', L: '2', XL: '0', XXL: '0',
+    '34': '0', '36': '0', '38': '5', '40': '5', '42': '2', '44': '0', '46': '0', '48': '0',
+    TU: '10'
+  });
+
+  const [colorStocks, setColorStocks] = useState<Record<string, { isTU: boolean; values: Record<string, string> }>>({});
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   
   const [newProduct, setNewProduct] = useState({
     title: '',
     slug: '',
     price: '',
-    colors: 'Unique',
-    stockXS: '0',
-    stockS: '5',
-    stockM: '5',
-    stockL: '2',
-    stockXL: '0',
-    stockXXL: '0',
-    stock34: '0',
-    stock36: '0',
-    stock38: '5',
-    stock40: '5',
-    stock42: '2',
-    stock44: '0',
-    stock46: '0',
-    stock48: '0',
-    stockTU: '10',
     category: 'Vestes',
     description: '',
   });
@@ -56,6 +50,31 @@ export default function AdminPage() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Mettre à jour dynamiquement les blocs multi-couleurs quand on tape les couleurs
+  useEffect(() => {
+    const currentColors = colorsInput.split(',').map(c => c.trim()).filter(Boolean);
+    const isMulti = currentColors.length > 1 && currentColors[0].toLowerCase() !== 'unique';
+
+    if (isMulti) {
+      setColorStocks(prev => {
+        const next = { ...prev };
+        currentColors.forEach(color => {
+          if (!next[color]) {
+            next[color] = {
+              isTU: false,
+              values: {
+                XS: '0', S: '5', M: '5', L: '2', XL: '0', XXL: '0',
+                '34': '0', '36': '0', '38': '5', '40': '5', '42': '2', '44': '0', '46': '0', '48': '0',
+                TU: '10'
+              }
+            };
+          }
+        });
+        return next;
+      });
+    }
+  }, [colorsInput]);
 
   const checkAdmin = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -93,85 +112,115 @@ export default function AdminPage() {
     const knownSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '34', '36', '38', '40', '42', '44', '46', '48', 'Taille Unique'];
     const isFlat = keys.length > 0 && knownSizes.includes(keys[0]);
 
-    let colorsStr = 'Unique';
-    let activeStock = stockObj;
-
-    if (!isFlat && keys.length > 0) {
-      colorsStr = keys.join(', ');
-      activeStock = stockObj[keys[0]] || {};
-    }
-
-    const isTU = activeStock['Taille Unique'] !== undefined;
-    setIsTailleUnique(isTU);
-
     setNewProduct({
       title: prod.title || '',
       slug: prod.slug || '',
       price: prod.price?.toString() || '',
-      colors: colorsStr,
-      stockXS: activeStock['XS']?.toString() || '0',
-      stockS: activeStock['S']?.toString() || '0',
-      stockM: activeStock['M']?.toString() || '0',
-      stockL: activeStock['L']?.toString() || '0',
-      stockXL: activeStock['XL']?.toString() || '0',
-      stockXXL: activeStock['XXL']?.toString() || '0',
-      stock34: activeStock['34']?.toString() || '0',
-      stock36: activeStock['36']?.toString() || '0',
-      stock38: activeStock['38']?.toString() || '0',
-      stock40: activeStock['40']?.toString() || '0',
-      stock42: activeStock['42']?.toString() || '0',
-      stock44: activeStock['44']?.toString() || '0',
-      stock46: activeStock['46']?.toString() || '0',
-      stock48: activeStock['48']?.toString() || '0',
-      stockTU: activeStock['Taille Unique']?.toString() || '10',
       category: prod.category || 'Vestes',
       description: prod.description || '',
     });
+
+    if (isFlat) {
+      setColorsInput('Unique');
+      const isTU = stockObj['Taille Unique'] !== undefined;
+      setIsTailleUnique(isTU);
+      setStockValues({
+        XS: stockObj['XS']?.toString() || '0',
+        S: stockObj['S']?.toString() || '0',
+        M: stockObj['M']?.toString() || '0',
+        L: stockObj['L']?.toString() || '0',
+        XL: stockObj['XL']?.toString() || '0',
+        XXL: stockObj['XXL']?.toString() || '0',
+        '34': stockObj['34']?.toString() || '0',
+        '36': stockObj['36']?.toString() || '0',
+        '38': stockObj['38']?.toString() || '0',
+        '40': stockObj['40']?.toString() || '0',
+        '42': stockObj['42']?.toString() || '0',
+        '44': stockObj['44']?.toString() || '0',
+        '46': stockObj['46']?.toString() || '0',
+        '48': stockObj['48']?.toString() || '0',
+        TU: stockObj['Taille Unique']?.toString() || '10',
+      });
+      setColorStocks({});
+    } else {
+      setColorsInput(keys.join(', '));
+      const newColorStocks: Record<string, any> = {};
+      keys.forEach(c => {
+        const cVal = stockObj[c] || {};
+        const isTU = cVal['Taille Unique'] !== undefined;
+        newColorStocks[c] = {
+          isTU,
+          values: {
+            XS: cVal['XS']?.toString() || '0',
+            S: cVal['S']?.toString() || '0',
+            M: cVal['M']?.toString() || '0',
+            L: cVal['L']?.toString() || '0',
+            XL: cVal['XL']?.toString() || '0',
+            XXL: cVal['XXL']?.toString() || '0',
+            '34': cVal['34']?.toString() || '0',
+            '36': cVal['36']?.toString() || '0',
+            '38': cVal['38']?.toString() || '0',
+            '40': cVal['40']?.toString() || '0',
+            '42': cVal['42']?.toString() || '0',
+            '44': cVal['44']?.toString() || '0',
+            '46': cVal['46']?.toString() || '0',
+            '48': cVal['48']?.toString() || '0',
+            TU: cVal['Taille Unique']?.toString() || '10',
+          }
+        };
+      });
+      setColorStocks(newColorStocks);
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({
-      title: '', slug: '', price: '', colors: 'Unique',
-      stockXS: '0', stockS: '5', stockM: '5', stockL: '2', stockXL: '0', stockXXL: '0', 
-      stock34: '0', stock36: '0', stock38: '5', stock40: '5', stock42: '2', stock44: '0', stock46: '0', stock48: '0', stockTU: '10',
-      category: 'Vestes', description: ''
-    });
+    setColorsInput('Unique');
     setIsTailleUnique(false);
+    setStockValues({
+      XS: '0', S: '5', M: '5', L: '2', XL: '0', XXL: '0',
+      '34': '0', '36': '0', '38': '5', '40': '5', '42': '2', '44': '0', '46': '0', '48': '0',
+      TU: '10'
+    });
+    setColorStocks({});
+    setNewProduct({
+      title: '', slug: '', price: '', category: 'Vestes', description: ''
+    });
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const colorList = newProduct.colors.split(',').map((c: string) => c.trim()).filter(Boolean);
+    const currentColors = colorsInput.split(',').map((c: string) => c.trim()).filter(Boolean);
+    const isMulti = currentColors.length > 1 && currentColors[0].toLowerCase() !== 'unique';
 
-    const sizeObject = isTailleUnique ? {
-      'Taille Unique': parseInt(newProduct.stockTU) || 0
-    } : {
-      XS: parseInt(newProduct.stockXS) || 0,
-      S: parseInt(newProduct.stockS) || 0,
-      M: parseInt(newProduct.stockM) || 0,
-      L: parseInt(newProduct.stockL) || 0,
-      XL: parseInt(newProduct.stockXL) || 0,
-      XXL: parseInt(newProduct.stockXXL) || 0,
-      '34': parseInt(newProduct.stock34) || 0,
-      '36': parseInt(newProduct.stock36) || 0,
-      '38': parseInt(newProduct.stock38) || 0,
-      '40': parseInt(newProduct.stock40) || 0,
-      '42': parseInt(newProduct.stock42) || 0,
-      '44': parseInt(newProduct.stock44) || 0,
-      '46': parseInt(newProduct.stock46) || 0,
-      '48': parseInt(newProduct.stock48) || 0,
+    const buildSizeObj = (isTU: boolean, vals: any) => isTU ? { 'Taille Unique': parseInt(vals.TU) || 0 } : {
+      XS: parseInt(vals.XS) || 0,
+      S: parseInt(vals.S) || 0,
+      M: parseInt(vals.M) || 0,
+      L: parseInt(vals.L) || 0,
+      XL: parseInt(vals.XL) || 0,
+      XXL: parseInt(vals.XXL) || 0,
+      '34': parseInt(vals['34']) || 0,
+      '36': parseInt(vals['36']) || 0,
+      '38': parseInt(vals['38']) || 0,
+      '40': parseInt(vals['40']) || 0,
+      '42': parseInt(vals['42']) || 0,
+      '44': parseInt(vals['44']) || 0,
+      '46': parseInt(vals['46']) || 0,
+      '48': parseInt(vals['48']) || 0,
     };
 
     let stockObject: Record<string, any> = {};
-    if (colorList.length <= 1 || colorList[0].toLowerCase() === 'unique') {
-      stockObject = sizeObject;
+
+    if (!isMulti) {
+      stockObject = buildSizeObj(isTailleUnique, stockValues);
     } else {
-      colorList.forEach((color: string) => {
-        stockObject[color] = sizeObject;
+      currentColors.forEach(color => {
+        const cData = colorStocks[color] || { isTU: false, values: stockValues };
+        stockObject[color] = buildSizeObj(cData.isTU, cData.values);
       });
     }
 
@@ -277,114 +326,179 @@ export default function AdminPage() {
                 <option value="Accessoires">Accessoires</option>
               </select>
 
-              {/* COULEURS ET GESTION DES STOCKS PAR TAILLE */}
+              {/* COULEURS ET GESTION DES STOCKS DYNAMIQUE */}
               <div className="md:col-span-2 border p-4 rounded bg-gray-50 space-y-4">
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">Couleurs disponibles (séparées par des virgules)</label>
                   <input 
                     type="text" 
-                    value={newProduct.colors} 
-                    onChange={e => setNewProduct({...newProduct, colors: e.target.value})} 
-                    placeholder="ex: Orange, Bleu ou Unique" 
+                    value={colorsInput} 
+                    onChange={e => setColorsInput(e.target.value)} 
+                    placeholder="ex: Bleu, Vert ou Unique" 
                     className="border p-2 rounded w-full bg-white" 
                     required 
                   />
-                  <p className="text-[10px] text-gray-400 mt-1">Écris "Unique" si le produit n'a pas de déclinaison de couleur.</p>
+                  <p className="text-[10px] text-gray-400 mt-1">Écris "Unique" si le produit n'a pas de déclinaison. Si tu mets plusieurs couleurs (ex: Bleu, Vert), un bloc complet de stock apparaîtra pour chaque couleur.</p>
                 </div>
 
-                <div className="flex items-center gap-3 pt-2 border-t border-gray-200">
-                  <input 
-                    type="checkbox" 
-                    id="tuCheckAdmin" 
-                    checked={isTailleUnique} 
-                    onChange={e => setIsTailleUnique(e.target.checked)} 
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                  <label htmlFor="tuCheckAdmin" className="font-semibold text-gray-700 cursor-pointer text-xs">
-                    Ce produit est en <strong className="text-anthracite">Taille Unique</strong>
-                  </label>
-                </div>
+                {(() => {
+                  const currentColors = colorsInput.split(',').map(c => c.trim()).filter(Boolean);
+                  const isMulti = currentColors.length > 1 && currentColors[0].toLowerCase() !== 'unique';
 
-                {isTailleUnique ? (
-                  <div>
-                    <label className="block text-[10px] text-gray-500 mb-1">Stock Taille Unique</label>
-                    <input 
-                      type="number" 
-                      value={newProduct.stockTU} 
-                      onChange={e => setNewProduct({...newProduct, stockTU: e.target.value})} 
-                      className="border p-2 rounded w-full md:w-1/3 bg-white" 
-                      required 
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-3 pt-2 border-t border-gray-200">
-                    <span className="block font-semibold text-gray-700 mb-1">Stocks par taille :</span>
-                    
-                    {/* Ligne 1 : Tailles Lettres (XS, S, M, L, XL, XXL) */}
-                    <div className="grid grid-cols-6 gap-2">
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">XS</label>
-                        <input type="number" value={newProduct.stockXS} onChange={e => setNewProduct({...newProduct, stockXS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">S</label>
-                        <input type="number" value={newProduct.stockS} onChange={e => setNewProduct({...newProduct, stockS: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">M</label>
-                        <input type="number" value={newProduct.stockM} onChange={e => setNewProduct({...newProduct, stockM: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">L</label>
-                        <input type="number" value={newProduct.stockL} onChange={e => setNewProduct({...newProduct, stockL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">XL</label>
-                        <input type="number" value={newProduct.stockXL} onChange={e => setNewProduct({...newProduct, stockXL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">XXL</label>
-                        <input type="number" value={newProduct.stockXXL} onChange={e => setNewProduct({...newProduct, stockXXL: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                    </div>
+                  if (!isMulti) {
+                    return (
+                      <div className="space-y-4 pt-2 border-t border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <input 
+                            type="checkbox" 
+                            id="tuCheckAdmin" 
+                            checked={isTailleUnique} 
+                            onChange={e => setIsTailleUnique(e.target.checked)} 
+                            className="w-4 h-4 cursor-pointer"
+                          />
+                          <label htmlFor="tuCheckAdmin" className="font-semibold text-gray-700 cursor-pointer text-xs">
+                            Ce produit est en <strong className="text-anthracite">Taille Unique</strong>
+                          </label>
+                        </div>
 
-                    {/* Ligne 2 : Tailles Françaises du 34 au 48 */}
-                    <div className="grid grid-cols-4 md:grid-cols-8 gap-2 pt-2 border-t border-gray-200">
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">34</label>
-                        <input type="number" value={newProduct.stock34} onChange={e => setNewProduct({...newProduct, stock34: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                        {isTailleUnique ? (
+                          <div>
+                            <label className="block text-[10px] text-gray-500 mb-1">Stock Taille Unique</label>
+                            <input 
+                              type="number" 
+                              value={stockValues.TU} 
+                              onChange={e => setStockValues({...stockValues, TU: e.target.value})} 
+                              className="border p-2 rounded w-full md:w-1/3 bg-white" 
+                              required 
+                            />
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <span className="block font-semibold text-gray-700 mb-1">Stocks par taille :</span>
+                            <div className="grid grid-cols-6 gap-2">
+                              {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(sz => (
+                                <div key={sz}>
+                                  <label className="block text-[10px] text-gray-500 mb-1">{sz}</label>
+                                  <input 
+                                    type="number" 
+                                    value={(stockValues as any)[sz]} 
+                                    onChange={e => setStockValues({...stockValues, [sz]: e.target.value})} 
+                                    className="border p-2 rounded w-full bg-white" 
+                                    required 
+                                  />
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="grid grid-cols-4 md:grid-cols-8 gap-2 pt-2 border-t border-gray-200">
+                              {['34', '36', '38', '40', '42', '44', '46', '48'].map(sz => (
+                                <div key={sz}>
+                                  <label className="block text-[10px] text-gray-500 mb-1">{sz}</label>
+                                  <input 
+                                    type="number" 
+                                    value={(stockValues as any)[sz]} 
+                                    onChange={e => setStockValues({...stockValues, [sz]: e.target.value})} 
+                                    className="border p-2 rounded w-full bg-white" 
+                                    required 
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">36</label>
-                        <input type="number" value={newProduct.stock36} onChange={e => setNewProduct({...newProduct, stock36: e.target.value})} className="border p-2 rounded w-full bg-white" required />
+                    );
+                  } else {
+                    return (
+                      <div className="space-y-6 pt-2 border-t border-gray-200">
+                        <span className="block font-bold text-anthracite text-xs uppercase tracking-wider">Gestion détaillée des stocks par couleur :</span>
+                        {currentColors.map(color => {
+                          const cData = colorStocks[color] || { isTU: false, values: stockValues };
+                          return (
+                            <div key={color} className="border p-4 rounded bg-white space-y-3 shadow-xs">
+                              <div className="flex justify-between items-center border-b pb-2">
+                                <h3 className="font-serif font-bold text-anthracite text-sm">Couleur : {color}</h3>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="checkbox" 
+                                    id={`tu-${color}`} 
+                                    checked={cData.isTU} 
+                                    onChange={e => {
+                                      const next = { ...colorStocks };
+                                      next[color] = { ...cData, isTU: e.target.checked };
+                                      setColorStocks(next);
+                                    }} 
+                                    className="w-4 h-4 cursor-pointer"
+                                  />
+                                  <label htmlFor={`tu-${color}`} className="text-[11px] font-semibold text-gray-700 cursor-pointer">
+                                    Taille Unique ({color})
+                                  </label>
+                                </div>
+                              </div>
+
+                              {cData.isTU ? (
+                                <div>
+                                  <label className="block text-[10px] text-gray-500 mb-1">Stock Taille Unique ({color})</label>
+                                  <input 
+                                    type="number" 
+                                    value={cData.values.TU} 
+                                    onChange={e => {
+                                      const next = { ...colorStocks };
+                                      next[color] = { ...cData, values: { ...cData.values, TU: e.target.value } };
+                                      setColorStocks(next);
+                                    }} 
+                                    className="border p-2 rounded w-full md:w-1/3 bg-white" 
+                                    required 
+                                  />
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-6 gap-2">
+                                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(sz => (
+                                      <div key={sz}>
+                                        <label className="block text-[9px] text-gray-500 mb-1">{sz}</label>
+                                        <input 
+                                          type="number" 
+                                          value={cData.values[sz]} 
+                                          onChange={e => {
+                                            const next = { ...colorStocks };
+                                            next[color] = { ...cData, values: { ...cData.values, [sz]: e.target.value } };
+                                            setColorStocks(next);
+                                          }} 
+                                          className="border p-1.5 rounded w-full bg-white text-xs" 
+                                          required 
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  <div className="grid grid-cols-4 md:grid-cols-8 gap-2 pt-2 border-t border-gray-100">
+                                    {['34', '36', '38', '40', '42', '44', '46', '48'].map(sz => (
+                                      <div key={sz}>
+                                        <label className="block text-[9px] text-gray-500 mb-1">{sz}</label>
+                                        <input 
+                                          type="number" 
+                                          value={cData.values[sz]} 
+                                          onChange={e => {
+                                            const next = { ...colorStocks };
+                                            next[color] = { ...cData, values: { ...cData.values, [sz]: e.target.value } };
+                                            setColorStocks(next);
+                                          }} 
+                                          className="border p-1.5 rounded w-full bg-white text-xs" 
+                                          required 
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">38</label>
-                        <input type="number" value={newProduct.stock38} onChange={e => setNewProduct({...newProduct, stock38: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">40</label>
-                        <input type="number" value={newProduct.stock40} onChange={e => setNewProduct({...newProduct, stock40: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">42</label>
-                        <input type="number" value={newProduct.stock42} onChange={e => setNewProduct({...newProduct, stock42: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">44</label>
-                        <input type="number" value={newProduct.stock44} onChange={e => setNewProduct({...newProduct, stock44: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">46</label>
-                        <input type="number" value={newProduct.stock46} onChange={e => setNewProduct({...newProduct, stock46: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">48</label>
-                        <input type="number" value={newProduct.stock48} onChange={e => setNewProduct({...newProduct, stock48: e.target.value})} className="border p-2 rounded w-full bg-white" required />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                    );
+                  }
+                })()}
               </div>
 
               <textarea 
