@@ -51,7 +51,6 @@ export default function AdminPage() {
     };
   }, []);
 
-  // Mettre à jour dynamiquement les blocs multi-couleurs quand on tape les couleurs
   useEffect(() => {
     const currentColors = colorsInput.split(',').map(c => c.trim()).filter(Boolean);
     const isMulti = currentColors.length > 1 && currentColors[0].toLowerCase() !== 'unique';
@@ -324,6 +323,10 @@ export default function AdminPage() {
                 <option value="Manteaux">Manteaux</option>
                 <option value="Maille">Maille</option>
                 <option value="Accessoires">Accessoires</option>
+                <option value="Chemises">Chemises</option>
+                <option value="Tops">Tops</option>
+                <option value="Hauts">Hauts</option>
+                <option value="Blouses">Blouses</option>
               </select>
 
               {/* COULEURS ET GESTION DES STOCKS DYNAMIQUE */}
