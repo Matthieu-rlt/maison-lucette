@@ -9,7 +9,7 @@ interface Product {
   title: string;
   category: string;
   price: number;
-  stock: { XS: number; S: number; M: number; L: number; XL: number };
+  stock: any;
 }
 
 export default function Home() {
@@ -25,11 +25,11 @@ export default function Home() {
     fetchProducts();
   }, []);
 
-  const categories = ['Tous', 'Vestes', 'Manteaux', 'Maille', 'Accessoires'];
+  const categories = ['Tous', 'Vestes', 'Manteaux', 'Maille', 'Accessoires', 'Chemises', 'Tops', 'Hauts', 'Blouses'];
 
   const filteredProducts = selectedCategory === 'Tous' 
     ? products 
-    : products.filter(p => p.category === selectedCategory);
+    : products.filter(p => p.category?.toLowerCase() === selectedCategory.toLowerCase());
 
   return (
     <div className="font-sans bg-creme min-h-screen text-anthracite">
@@ -62,13 +62,13 @@ export default function Home() {
             <h2 className="text-3xl font-serif text-anthracite">Les Incontournables</h2>
           </div>
 
-          {/* SYSTÈME DE FILTRES PAR CATÉGORIE */}
-          <div className="flex flex-wrap gap-2">
+          {/* SYSTÈME DE FILTRES PAR CATÉGORIE DÉFILANT */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none max-w-full">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 text-xs uppercase tracking-widest transition-all rounded ${
+                className={`px-4 py-2.5 text-xs uppercase tracking-widest whitespace-nowrap transition-all rounded ${
                   selectedCategory === cat
                     ? 'bg-anthracite text-white font-bold'
                     : 'bg-white text-anthracite border border-gray-200 hover:border-anthracite'
@@ -81,7 +81,7 @@ export default function Home() {
         </div>
 
         {filteredProducts.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
+          <div className="text-center py-16 text-gray-500 text-xs uppercase tracking-widest">
             <p className="mb-4">Aucun produit dans cette catégorie pour le moment.</p>
           </div>
         ) : (
