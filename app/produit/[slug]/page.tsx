@@ -147,7 +147,8 @@ export default function ProductPage() {
       const favs = JSON.parse(localStorage.getItem('maison_lucette_favorites') || '[]');
       let updatedFavs;
       
-      const finalPrice = product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+      const discountVal = Number(product.discount || 0);
+      const finalPrice = discountVal > 0 ? product.price * (1 - discountVal / 100) : product.price;
 
       const productObj = {
         slug: product.slug,
@@ -188,7 +189,8 @@ export default function ProductPage() {
       return;
     }
 
-    const finalPrice = product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+    const discountVal = Number(product.discount || 0);
+    const finalPrice = discountVal > 0 ? product.price * (1 - discountVal / 100) : product.price;
 
     const itemLabel = selectedColor && selectedColor !== 'Unique' 
       ? `${product.title} (Couleur : ${selectedColor} / Taille : ${selectedSize})`
@@ -251,8 +253,9 @@ export default function ProductPage() {
   const currentSizes = isFlat ? stockObj : (stockObj[selectedColor] || {});
   const isTailleUniqueProduct = currentSizes['Taille Unique'] !== undefined;
 
-  const hasDiscount = product.discount && product.discount > 0;
-  const finalPrice = hasDiscount ? product.price * (1 - product.discount / 100) : product.price;
+  const discountVal = Number(product.discount || 0);
+  const hasDiscount = discountVal > 0;
+  const finalPrice = hasDiscount ? product.price * (1 - discountVal / 100) : product.price;
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 font-sans">
@@ -326,10 +329,10 @@ export default function ProductPage() {
             <div className="flex items-center gap-3 mt-4">
               {hasDiscount ? (
                 <>
-                  <span className="text-xl font-semibold text-red-600">{finalPrice.toFixed(2)} €</span>
+                  <span className="text-xl font-semibold text-emerald-600">{finalPrice.toFixed(2)} €</span>
                   <span className="text-base text-gray-400 line-through">{Number(product.price).toFixed(2)} €</span>
-                  <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
-                    -{product.discount}% de remise
+                  <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                    -{discountVal}% de remise
                   </span>
                 </>
               ) : (
