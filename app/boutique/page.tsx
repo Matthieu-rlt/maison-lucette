@@ -43,7 +43,8 @@ function ProductCard({ product }: ProductCardProps) {
       const favs = JSON.parse(localStorage.getItem('maison_lucette_favorites') || '[]');
       let updatedFavs;
       
-      const finalPrice = product.discount && product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+      const discountVal = Number(product.discount || 0);
+      const finalPrice = discountVal > 0 ? product.price * (1 - discountVal / 100) : product.price;
 
       const productObj = {
         slug: product.slug,
@@ -70,7 +71,8 @@ function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    const finalPrice = product.discount && product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+    const discountVal = Number(product.discount || 0);
+    const finalPrice = discountVal > 0 ? product.price * (1 - discountVal / 100) : product.price;
 
     const cartItem = {
       name: product.title,
@@ -93,8 +95,9 @@ function ProductCard({ product }: ProductCardProps) {
     alert('Article ajouté au panier avec succès !');
   };
 
-  const hasDiscount = product.discount && product.discount > 0;
-  const finalPrice = hasDiscount ? product.price * (1 - product.discount / 100) : product.price;
+  const discountVal = Number(product.discount || 0);
+  const hasDiscount = discountVal > 0;
+  const finalPrice = hasDiscount ? product.price * (1 - discountVal / 100) : product.price;
 
   return (
     <div className="group flex flex-col space-y-4 relative">
@@ -107,7 +110,7 @@ function ProductCard({ product }: ProductCardProps) {
 
         {hasDiscount && (
           <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded">
-            -{product.discount}%
+            -{discountVal}%
           </span>
         )}
         
