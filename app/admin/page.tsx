@@ -209,6 +209,13 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteMessage = async (id: string) => {
+    if (confirm('Voulez-vous vraiment supprimer ce message ?')) {
+      await supabase.from('messages').delete().eq('id', id);
+      fetchData();
+    }
+  };
+
   if (loading) return <div className="text-center py-24 text-xs uppercase tracking-widest">Chargement...</div>;
 
   return (
@@ -418,9 +425,17 @@ export default function AdminPage() {
               <div className="space-y-4 max-h-80 overflow-y-auto">
                 {messages.map(msg => (
                   <div key={msg.id} className="border p-4 rounded text-xs space-y-1 bg-gray-50">
-                    <div className="flex justify-between font-semibold text-anthracite">
+                    <div className="flex justify-between items-center font-semibold text-anthracite">
                       <span>{msg.name} ({msg.email})</span>
-                      <span className="text-gray-400 font-normal">{new Date(msg.created_at).toLocaleDateString('fr-FR')}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-gray-400 font-normal">{new Date(msg.created_at).toLocaleDateString('fr-FR')}</span>
+                        <button 
+                          onClick={() => handleDeleteMessage(msg.id)} 
+                          className="text-red-500 hover:underline uppercase text-[10px]"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
                     </div>
                     {msg.phone && <p className="text-gray-500">Tél : {msg.phone}</p>}
                     <p className="text-gray-700 mt-2">{msg.message}</p>
