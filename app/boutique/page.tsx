@@ -8,6 +8,7 @@ interface Product {
   title: string;
   category: string;
   price: number;
+  discount?: number;
   description?: string;
   stock: any;
 }
@@ -17,6 +18,7 @@ interface ProductCardProps {
     slug: string;
     title: string;
     price: number;
+    discount?: number;
     category: string;
     image1: string;
     image2?: string;
@@ -41,10 +43,20 @@ function ProductCard({ product }: ProductCardProps) {
       const favs = JSON.parse(localStorage.getItem('maison_lucette_favorites') || '[]');
       let updatedFavs;
       
+      const finalPrice = product.discount && product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+
+      const productObj = {
+        slug: product.slug,
+        title: product.title,
+        price: finalPrice,
+        category: product.category,
+        image1: product.image1,
+      };
+
       if (isFavorite) {
         updatedFavs = favs.filter((fav: any) => fav.slug !== product.slug);
       } else {
-        updatedFavs = [...favs, product];
+        updatedFavs = [...favs, productObj];
       }
 
       localStorage.setItem('maison_lucette_favorites', JSON.stringify(updatedFavs));
@@ -58,9 +70,11 @@ function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     
+    const finalPrice = product.discount && product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+
     const cartItem = {
       name: product.title,
-      price: product.price,
+      price: finalPrice,
       image: product.image1,
       quantity: 1,
     };
@@ -79,6 +93,9 @@ function ProductCard({ product }: ProductCardProps) {
     alert('Article ajouté au panier avec succès !');
   };
 
+  const hasDiscount = product.discount && product.discount > 0;
+  const finalPrice = hasDiscount ? product.price * (1 - product.discount / 100) : product.price;
+
   return (
     <div className="group flex flex-col space-y-4 relative">
       <Link href={`/produit/${product.slug}`} className="block relative aspect-[3/4] overflow-hidden bg-gray-100 rounded">
@@ -87,6 +104,12 @@ function ProductCard({ product }: ProductCardProps) {
           alt={product.title} 
           className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
         />
+
+        {hasDiscount && (
+          <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded">
+            -{product.discount}%
+          </span>
+        )}
         
         <button
           onClick={toggleFavorite}
@@ -111,7 +134,16 @@ function ProductCard({ product }: ProductCardProps) {
             {product.title}
           </Link>
         </div>
-        <span className="text-sm font-semibold text-anthracite">{product.price.toFixed(2)} €</span>
+        <div className="text-right">
+          {hasDiscount ? (
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-semibold text-red-600">{finalPrice.toFixed(2)} €</span>
+              <span className="text-xs text-gray-400 line-through">{product.price.toFixed(2)} €</span>
+            </div>
+          ) : (
+            <span className="text-sm font-semibold text-anthracite">{product.price.toFixed(2)} €</span>
+          )}
+        </div>
       </div>
 
       <button
@@ -196,6 +228,7 @@ export default function BoutiquePage() {
                 slug: product.slug,
                 title: product.title,
                 price: product.price,
+                discount: product.discount,
                 category: product.category,
                 image1: `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
                 image2: `${SUPABASE_STORAGE_URL}/${product.slug}-2.jpg`,
