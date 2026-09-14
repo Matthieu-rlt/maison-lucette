@@ -25,7 +25,7 @@ export default function Home() {
     fetchProducts();
   }, []);
 
-  const categories = ['Tous', 'Vestes', 'Manteaux', 'Maille', 'Accessoires', 'Chemises', 'Tops', 'Hauts', 'Blouses'];
+  const categories = ['Tous', 'Vestes', 'Manteaux', 'Maille', 'Accessoires', 'Chemises', 'Tops', 'Hauts', 'Blouses', 'Jeans', 'Pantalon'];
 
   const filteredProducts = selectedCategory === 'Tous' 
     ? products 
@@ -93,6 +93,7 @@ export default function Home() {
                   slug: product.slug,
                   title: product.title,
                   price: product.price,
+                  discount: product.discount,
                   category: product.category,
                   image1: `${SUPABASE_STORAGE_URL}/${product.slug}-1.jpg`,
                   image2: `${SUPABASE_STORAGE_URL}/${product.slug}-2.jpg`,
