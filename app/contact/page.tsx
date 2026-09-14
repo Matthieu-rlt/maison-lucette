@@ -130,6 +130,10 @@ export default function ContactPage() {
               <span className="block font-semibold uppercase tracking-widest text-anthracite mb-1 text-[10px]">✉️ E-mail</span>
               <a href="mailto:contact@maisonlucette.com" className="hover:underline text-gray-800 font-medium">Sandrinejolly7@yahoo.fR</a>
             </div>
+            <div>
+              <span className="block font-semibold uppercase tracking-widest text-anthracite mb-1 text-[10px]">📸 Instagram</span>
+              <a href="https://instagram.com/maisonlucette7" target="_blank" rel="noopener noreferrer" className="hover:underline text-gray-800 font-medium">@maisonlucette7</a>
+            </div>
           </div>
 
           <div className="border-t border-gray-100 pt-6">
