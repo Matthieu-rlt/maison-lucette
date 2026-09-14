@@ -10,7 +10,8 @@ export default function AccountPage() {
   // Les deux e-mails autorisés à voir le lien vers l'admin
   const allowedEmails = [
     'matthieuriallot@gmail.com',
-    'sandrinejolly7@yahoo.fr'
+    'matthieucompte1@gmail.com',
+    'sandrinelelong613@gmail.com'
   ];
 
   useEffect(() => {
