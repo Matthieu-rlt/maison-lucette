@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase';
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [debugEmail, setDebugEmail] = useState<string>(''); // Pour voir l'e-mail reçu
   const [messages, setMessages] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   
@@ -32,7 +31,16 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
-    checkAdmin();
+    async function checkAdminSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      handleUserSession(session?.user || null);
+    }
+
+    checkAdminSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleUserSession(session?.user || null);
+    });
 
     const channel = supabase
       .channel('admin-realtime')
@@ -49,9 +57,33 @@ export default function AdminPage() {
       .subscribe();
 
     return () => {
+      subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const handleUserSession = (currentUser: any) => {
+    const allowedEmails = [
+      'matthieuriallot@gmail.com',
+      'sandrinelelong613@gmail.com',
+      'matthieucompte1@gmail.com'
+    ];
+
+    if (currentUser && currentUser.email) {
+      const userEmail = currentUser.email.toLowerCase().trim();
+      const isAllowed = allowedEmails.map(e => e.toLowerCase().trim()).includes(userEmail);
+
+      if (isAllowed) {
+        setUser(currentUser);
+        fetchData();
+      } else {
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     const currentColors = colorsInput.split(',').map(c => c.trim()).filter(Boolean);
@@ -76,33 +108,6 @@ export default function AdminPage() {
       });
     }
   }, [colorsInput]);
-
-  const checkAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    const allowedEmails = [
-      'matthieuriallot@gmail.com',
-      'sandrinelelong613@gmail.com',
-      'matthieucompte1@gmail.com'
-    ];
-
-    if (user && user.email) {
-      setDebugEmail(user.email); // On mémorise l'e-mail exact renvoyé par Google
-      const userEmail = user.email.toLowerCase().trim();
-      const isAllowed = allowedEmails.map(e => e.toLowerCase().trim()).includes(userEmail);
-
-      if (isAllowed) {
-        setUser(user);
-        fetchData();
-      } else {
-        setUser(null);
-      }
-    } else {
-      setUser(null);
-      setDebugEmail('Aucun e-mail détecté (non connecté)');
-    }
-    setLoading(false);
-  };
 
   const fetchData = async () => {
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
@@ -290,9 +295,6 @@ export default function AdminPage() {
       {!user ? (
         <div className="bg-white p-8 rounded border border-gray-100 text-center space-y-4 max-w-md mx-auto">
           <p className="text-xs text-gray-600">Accès restreint. Veuillez vous connecter avec un compte administrateur autorisé.</p>
-          <div className="bg-red-50 p-3 rounded border border-red-100 text-xs text-red-600 font-mono">
-            E-mail détecté par Google : <strong>{debugEmail}</strong>
-          </div>
           <Link href="/compte" className="inline-block bg-anthracite text-white px-6 py-3 text-xs uppercase tracking-widest rounded">
             Se connecter
           </Link>
