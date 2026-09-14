@@ -81,7 +81,7 @@ export default function AdminPage() {
     
     const allowedEmails = [
       'matthieuriallot@gmail.com',
-      'Sandrinelelong613@gmail.com'
+      'sandrinelelong613@gmail.com'
     ];
 
     if (user && user.email && allowedEmails.includes(user.email)) {
@@ -349,6 +349,8 @@ export default function AdminPage() {
                   <option value="Tops">Tops</option>
                   <option value="Hauts">Hauts</option>
                   <option value="Blouses">Blouses</option>
+                  <option value="Jeans">Jeans</option>
+                  <option value="Pantalon">Pantalon</option>
                 </select>
               </div>
 
