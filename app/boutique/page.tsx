@@ -109,7 +109,7 @@ function ProductCard({ product }: ProductCardProps) {
         />
 
         {hasDiscount && (
-          <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded">
+          <span className="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded">
             -{discountVal}%
           </span>
         )}
@@ -140,7 +140,7 @@ function ProductCard({ product }: ProductCardProps) {
         <div className="text-right">
           {hasDiscount ? (
             <div className="flex flex-col items-end">
-              <span className="text-sm font-semibold text-red-600">{finalPrice.toFixed(2)} €</span>
+              <span className="text-sm font-semibold text-emerald-600">{finalPrice.toFixed(2)} €</span>
               <span className="text-xs text-gray-400 line-through">{product.price.toFixed(2)} €</span>
             </div>
           ) : (
@@ -166,7 +166,7 @@ export default function BoutiquePage() {
 
   const SUPABASE_STORAGE_URL = "https://lujfahankslcpcywiugh.supabase.co/storage/v1/object/public/products";
 
-  const categories = ['Tous', 'Vestes', 'Manteaux', 'Maille', 'Accessoires', 'Chemises', 'Tops', 'Hauts', 'Blouses'];
+  const categories = ['Tous', 'Vestes', 'Manteaux', 'Maille', 'Accessoires', 'Chemises', 'Tops', 'Hauts', 'Blouses', 'Jeans', 'Pantalon'];
 
   useEffect(() => {
     async function fetchProducts() {
