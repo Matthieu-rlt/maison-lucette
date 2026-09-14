@@ -9,6 +9,7 @@ interface Product {
   title: string;
   category: string;
   price: number;
+  discount?: number;
   stock: any;
 }
 
