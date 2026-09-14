@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [debugEmail, setDebugEmail] = useState<string>(''); // Pour voir l'e-mail reçu
   const [messages, setMessages] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   
@@ -85,11 +86,20 @@ export default function AdminPage() {
       'matthieucompte1@gmail.com'
     ];
 
-    if (user && user.email && allowedEmails.includes(user.email)) {
-      setUser(user);
-      fetchData();
+    if (user && user.email) {
+      setDebugEmail(user.email); // On mémorise l'e-mail exact renvoyé par Google
+      const userEmail = user.email.toLowerCase().trim();
+      const isAllowed = allowedEmails.map(e => e.toLowerCase().trim()).includes(userEmail);
+
+      if (isAllowed) {
+        setUser(user);
+        fetchData();
+      } else {
+        setUser(null);
+      }
     } else {
       setUser(null);
+      setDebugEmail('Aucun e-mail détecté (non connecté)');
     }
     setLoading(false);
   };
@@ -280,6 +290,9 @@ export default function AdminPage() {
       {!user ? (
         <div className="bg-white p-8 rounded border border-gray-100 text-center space-y-4 max-w-md mx-auto">
           <p className="text-xs text-gray-600">Accès restreint. Veuillez vous connecter avec un compte administrateur autorisé.</p>
+          <div className="bg-red-50 p-3 rounded border border-red-100 text-xs text-red-600 font-mono">
+            E-mail détecté par Google : <strong>{debugEmail}</strong>
+          </div>
           <Link href="/compte" className="inline-block bg-anthracite text-white px-6 py-3 text-xs uppercase tracking-widest rounded">
             Se connecter
           </Link>
